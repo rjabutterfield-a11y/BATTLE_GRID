@@ -252,7 +252,7 @@ header h1{font-family:'Bebas Neue';font-size:clamp(2rem,5vw,3.5rem);letter-spaci
 // console.firebase.google.com → Project Settings → Your apps → SDK setup
 // ================================================================
 const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
+   apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
   authDomain: "battle-grid-7fa4f.firebaseapp.com",
   databaseURL: "https://battle-grid-7fa4f-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "battle-grid-7fa4f",
@@ -485,7 +485,21 @@ function normaliseState(data){
     for(let i=0;i<GRID_SIZE;i++) if(data.grid[i]===undefined) data.grid[i]=0;
   }
   if(data.usedQ&&!Array.isArray(data.usedQ)) data.usedQ=Object.values(data.usedQ);
+  if(!data.usedQ) data.usedQ=[];
   if(!data.players) data.players={red:false,blue:false};
+  if(!data.players.red) data.players.red=false;
+  if(!data.players.blue) data.players.blue=false;
+  // Firebase drops empty arrays/objects — restore all required fields
+  if(!data.hand) data.hand={red:[],blue:[]};
+  if(!data.hand.red) data.hand.red=[];
+  if(!data.hand.blue) data.hand.blue=[];
+  if(!data.scores) data.scores={red:0,blue:0};
+  if(data.scores.red===undefined) data.scores.red=0;
+  if(data.scores.blue===undefined) data.scores.blue=0;
+  if(!data.activeCats) data.activeCats=[];
+  if(!data.catQueue) data.catQueue=[];
+  if(!data.turn) data.turn='red';
+  if(!data.grid) data.grid=Array(GRID_SIZE).fill(0);
   return data;
 }
 
