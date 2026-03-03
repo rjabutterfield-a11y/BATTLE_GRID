@@ -252,7 +252,7 @@ header h1{font-family:'Bebas Neue';font-size:clamp(2rem,5vw,3.5rem);letter-spaci
 // console.firebase.google.com → Project Settings → Your apps → SDK setup
 // ================================================================
 const FIREBASE_CONFIG = {
-   apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
+  apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
   authDomain: "battle-grid-7fa4f.firebaseapp.com",
   databaseURL: "https://battle-grid-7fa4f-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "battle-grid-7fa4f",
@@ -654,21 +654,32 @@ function resetLocalUI(){
 // REMOTE STATE UPDATE
 // ================================================================
 function onRemoteStateUpdate(gs){
-  // Not in game yet — update side lobby buttons if visible
+  // Not yet chosen a side — update lobby buttons if that screen is visible
   if(!myRole){
     if(document.getElementById('lobby-side').style.display!=='none') updateSideLobbyButtons(gs);
     return;
   }
   if(gs.gameOver){ showEndScreen(gs); return; }
-  if(!gs.started){ showWaiting('WAITING FOR OPPONENT\n\nRoom: '+currentRoomCode); return; }
+
+  if(!gs.started){
+    // Still waiting — make sure waiting overlay is shown
+    showWaiting();
+    return;
+  }
+
+  // Game has started — make sure the game screen is visible (handles P1 who was on waiting overlay)
   hideWaiting();
-  // Only reset local question UI when it's now our turn AND we weren't already mid-turn
-  // (i.e. the turn just switched TO us from the opponent)
-  const justBecameMyTurn = gs.turn===myRole && !localAnswered && localPhase==='question' && !localCurrentQ;
-  if(justBecameMyTurn){
-    document.getElementById('question-text').textContent='Press NEXT Q when ready!';
+  document.getElementById('lobby-code').style.display='none';
+  document.getElementById('lobby-side').style.display='none';
+  document.getElementById('game').style.display='block';
+
+  // Set question prompt text if we have no active question
+  if(!localCurrentQ){
+    const prompt = gs.turn===myRole ? 'Press NEXT Q to begin!' : "Opponent's turn...";
+    document.getElementById('question-text').textContent=prompt;
     document.getElementById('answers').innerHTML='';
   }
+
   renderAll();
 }
 
