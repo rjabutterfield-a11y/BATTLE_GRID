@@ -129,6 +129,8 @@ header h1{font-family:'Bebas Neue';font-size:clamp(2rem,5vw,3.5rem);letter-spaci
 .end-btn:hover{transform:translateY(-2px);}
 @keyframes steal-pulse-btn{from{transform:scale(1);}to{transform:scale(1.05);}}
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 <div id="app">
@@ -435,7 +437,6 @@ function eligibleQuestions(gs){
 // ================================================================
 // FIREBASE INIT — uses dynamic import so functions stay on window scope
 // ================================================================
-let _fbRef, _fbSet, _fbOnValue, _fbGet;
 let db, roomUnsubscribe=null;
 let myRole=null;
 let currentRoomCode=null;
@@ -451,35 +452,25 @@ function showError(msg){
   document.getElementById('lobby-status').textContent='Connection error — see above';
 }
 
-// Check config hasn't been left as placeholder
+// Initialise Firebase using compat SDK (loaded via <script> tags in <head>)
 if(FIREBASE_CONFIG.apiKey==='YOUR_API_KEY'){
-  showError('⚠️ Firebase config not set up yet. Open index.html and replace the YOUR_* placeholder values with your real Firebase config.');
+  showError('⚠️ Config not filled in. Open index.html and replace the YOUR_* values with your real Firebase config from the Firebase console.');
 } else {
-  // Dynamically import Firebase so we stay in regular (non-module) script scope
-  Promise.all([
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')
-  ]).then(([appMod, dbMod])=>{
-    const { initializeApp } = appMod;
-    _fbRef=dbMod.ref; _fbSet=dbMod.set; _fbOnValue=dbMod.onValue; _fbGet=dbMod.get;
-    try {
-      const app=initializeApp(FIREBASE_CONFIG);
-      db=dbMod.getDatabase(app);
-      document.getElementById('lobby-status').textContent='Connected — enter a code or create a new game';
-    } catch(e){
-      showError('Firebase init failed: '+e.message+'. Check your config values.');
-    }
-  }).catch(e=>{
-    showError('Failed to load Firebase SDK: '+e.message+'. Check your internet connection.');
-  });
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.database();
+    document.getElementById('lobby-status').textContent='Connected — enter a code or create a new game';
+  } catch(e){
+    showError('Firebase init failed: '+e.message+'. Double-check your config values.');
+  }
 }
 
-function roomRef(code){ return _fbRef(db,'battlegrid/rooms/'+code); }
+function roomRef(code){ return db.ref('battlegrid/rooms/'+code); }
 
 async function saveState(s){
-  if(!currentRoomCode||!db||!_fbSet) return;
+  if(!currentRoomCode||!db) return;
   const clean={...s, grid:(s.grid||[]).map(v=>v==null?0:v)};
-  await _fbSet(roomRef(currentRoomCode), clean);
+  await roomRef(currentRoomCode).set(clean);
 }
 
 function normaliseState(data){
@@ -532,7 +523,7 @@ async function createRoom(){
   const initial=makeInitialState(code);
   currentRoomCode=code;
   try {
-    await _fbSet(roomRef(code), initial);
+    await roomRef(code).set(initial);
   } catch(e){ alert('Error creating room: '+e.message); return; }
   showSideLobby(code, initial);
   subscribeToRoom(code);
@@ -546,7 +537,7 @@ async function joinRoom(){
     return;
   }
   let snap;
-  try { snap=await _fbGet(roomRef(input)); } catch(e){ alert('Error: '+e.message); return; }
+  try { snap=await roomRef(input).get(); } catch(e){ alert('Error: '+e.message); return; }
   if(!snap.val()){
     document.getElementById('lobby-status').textContent='Room '+input+' not found. Check the code or create a new game.';
     return;
@@ -559,7 +550,9 @@ async function joinRoom(){
 
 function subscribeToRoom(code){
   if(roomUnsubscribe) roomUnsubscribe();
-  roomUnsubscribe=_fbOnValue(roomRef(code), snapshot=>{
+  const listenRef=roomRef(code);
+  roomUnsubscribe=function(){ listenRef.off('value'); };
+  listenRef.on('value', snapshot=>{
     const raw=snapshot.val();
     if(!raw) return;
     const data=normaliseState(raw);
@@ -607,7 +600,7 @@ async function joinAs(role){
   document.getElementById('btn-join-blue').disabled=true;
   document.getElementById('lobby-side-status').textContent='Joining...';
   let snap;
-  try { snap=await _fbGet(roomRef(currentRoomCode)); } catch(e){ alert('Error: '+e.message); return; }
+  try { snap=await roomRef(currentRoomCode).get(); } catch(e){ alert('Error: '+e.message); return; }
   let gs=normaliseState(snap.val());
   if(!gs) gs=makeInitialState(currentRoomCode);
   if(gs.players[role]){
