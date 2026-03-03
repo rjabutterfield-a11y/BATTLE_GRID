@@ -252,7 +252,7 @@ header h1{font-family:'Bebas Neue';font-size:clamp(2rem,5vw,3.5rem);letter-spaci
 // console.firebase.google.com → Project Settings → Your apps → SDK setup
 // ================================================================
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
+    apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
   authDomain: "battle-grid-7fa4f.firebaseapp.com",
   databaseURL: "https://battle-grid-7fa4f-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "battle-grid-7fa4f",
@@ -459,6 +459,7 @@ if(FIREBASE_CONFIG.apiKey==='YOUR_API_KEY'){
   try {
     firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.database();
+    console.log('[BG] Firebase connected OK');
     document.getElementById('lobby-status').textContent='Connected — enter a code or create a new game';
   } catch(e){
     showError('Firebase init failed: '+e.message+'. Double-check your config values.');
@@ -525,6 +526,7 @@ async function createRoom(){
   try {
     await roomRef(code).set(initial);
   } catch(e){ alert('Error creating room: '+e.message); return; }
+  console.log('[BG] Room created:',code);
   showSideLobby(code, initial);
   subscribeToRoom(code);
 }
@@ -557,7 +559,6 @@ function subscribeToRoom(code){
     if(!raw) return;
     const data=normaliseState(raw);
     gameState=data;
-    // Only handle remote updates if we've already joined as a player
     if(myRole) onRemoteStateUpdate(data);
     else updateSideLobbyButtons(data);
   });
@@ -595,7 +596,6 @@ function leaveRoom(){
 
 async function joinAs(role){
   if(!currentRoomCode) return;
-  // Disable buttons immediately to prevent double-click
   document.getElementById('btn-join-red').disabled=true;
   document.getElementById('btn-join-blue').disabled=true;
   document.getElementById('lobby-side-status').textContent='Joining...';
@@ -608,7 +608,6 @@ async function joinAs(role){
     updateSideLobbyButtons(gs);
     return;
   }
-  // Set myRole BEFORE saving so onValue callback (if it fires) knows we're in-game
   myRole=role;
   gs.players[role]=true;
   const bothJoined=gs.players.red&&gs.players.blue;
@@ -618,16 +617,13 @@ async function joinAs(role){
   }
   await saveState(gs);
   gameState=gs;
-  // Transition UI explicitly — don't wait for onValue
+  dbg('joinAs: role='+role+' bothJoined='+bothJoined+' started='+gs.started);
+  // Always show the game screen now — onRemoteStateUpdate handles waiting vs live
   document.getElementById('lobby-side').style.display='none';
   document.getElementById('game').style.display='block';
-  if(!bothJoined){
-    showWaiting('WAITING FOR OPPONENT\n\nRoom: '+currentRoomCode);
-  } else {
-    hideWaiting();
-    resetLocalUI();
-  }
-  renderAll();
+  resetLocalUI();
+  // Drive the UI directly — don't rely on onValue firing again
+  onRemoteStateUpdate(gs);
 }
 
 async function resetGame(){
@@ -653,30 +649,34 @@ function resetLocalUI(){
 // ================================================================
 // REMOTE STATE UPDATE
 // ================================================================
+function dbg(msg){
+  const el=document.getElementById('debug-bar');
+  if(el) el.textContent=new Date().toLocaleTimeString()+' | '+msg;
+  console.log('[BG]',msg);
+}
+
 function onRemoteStateUpdate(gs){
-  // Not yet chosen a side — update lobby buttons if that screen is visible
-  if(!myRole){
-    if(document.getElementById('lobby-side').style.display!=='none') updateSideLobbyButtons(gs);
-    return;
-  }
+  dbg('update: myRole='+myRole+' started='+gs.started+' turn='+gs.turn+' gameOver='+gs.gameOver);
+  if(!myRole) return;
   if(gs.gameOver){ showEndScreen(gs); return; }
 
   if(!gs.started){
-    // Still waiting — make sure waiting overlay is shown
+    // Waiting for the other player — show overlay
+    document.getElementById('game').style.display='block';
     showWaiting();
     return;
   }
 
-  // Game has started — make sure the game screen is visible (handles P1 who was on waiting overlay)
+  // Both players in — hide waiting, show game
   hideWaiting();
   document.getElementById('lobby-code').style.display='none';
   document.getElementById('lobby-side').style.display='none';
   document.getElementById('game').style.display='block';
 
-  // Set question prompt text if we have no active question
+  // If no question is active, set the prompt text
   if(!localCurrentQ){
-    const prompt = gs.turn===myRole ? 'Press NEXT Q to begin!' : "Opponent's turn...";
-    document.getElementById('question-text').textContent=prompt;
+    document.getElementById('question-text').textContent=
+      gs.turn===myRole ? 'Press NEXT Q to begin!' : "Waiting for opponent...";
     document.getElementById('answers').innerHTML='';
   }
 
