@@ -244,22 +244,20 @@ header h1{font-family:'Bebas Neue';font-size:clamp(2rem,5vw,3.5rem);letter-spaci
 </div>
 
 <!-- Firebase SDK -->
-<script type="module">
+<script>
 // ================================================================
-// FIREBASE CONFIG — replace these values with your own from:
-// console.firebase.google.com → your project → Project Settings → Your apps
+// FIREBASE CONFIG — paste your values here from:
+// console.firebase.google.com → Project Settings → Your apps → SDK setup
 // ================================================================
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, onValue, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-
 const FIREBASE_CONFIG = {
-  apiKey:            "YOUR_API_KEY",
-  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL:       "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId:         "YOUR_PROJECT_ID",
-  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId:             "YOUR_APP_ID"
+   apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
+  authDomain: "battle-grid-7fa4f.firebaseapp.com",
+  databaseURL: "https://battle-grid-7fa4f-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "battle-grid-7fa4f",
+  storageBucket: "battle-grid-7fa4f.firebasestorage.app",
+  messagingSenderId: "775436519324",
+  appId: "1:775436519324:web:34a3f1aa6b29882c9baa59",
+  measurementId: "G-8Q88LCZ2W1"
 };
 // ================================================================
 
@@ -435,9 +433,10 @@ function eligibleQuestions(gs){
 }
 
 // ================================================================
-// FIREBASE INIT
+// FIREBASE INIT — uses dynamic import so functions stay on window scope
 // ================================================================
-let db, gameRef, roomUnsubscribe=null;
+let _fbRef, _fbSet, _fbOnValue, _fbGet;
+let db, roomUnsubscribe=null;
 let myRole=null;
 let currentRoomCode=null;
 let gameState=null;
@@ -446,25 +445,41 @@ let gameState=null;
 let localPhase='question', localSelectedTile=null, localStealTile=null;
 let localAnswered=false, localCurrentQ=null, localStealAvailable=false;
 
-let firebaseReady=false;
-try {
-  const app=initializeApp(FIREBASE_CONFIG);
-  db=getDatabase(app);
-  firebaseReady=true;
-  document.getElementById('lobby-status').textContent='Connected — enter a code or create a new game';
-} catch(e) {
-  const errEl=document.getElementById('firebase-error');
-  errEl.style.display='block';
-  errEl.textContent='Firebase connection failed. Check config values at the top of the script. Error: '+e.message;
+function showError(msg){
+  const el=document.getElementById('firebase-error');
+  el.style.display='block'; el.textContent=msg;
   document.getElementById('lobby-status').textContent='Connection error — see above';
 }
 
-function roomRef(code){ return ref(db,'battlegrid/rooms/'+code); }
+// Check config hasn't been left as placeholder
+if(FIREBASE_CONFIG.apiKey==='YOUR_API_KEY'){
+  showError('⚠️ Firebase config not set up yet. Open index.html and replace the YOUR_* placeholder values with your real Firebase config.');
+} else {
+  // Dynamically import Firebase so we stay in regular (non-module) script scope
+  Promise.all([
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')
+  ]).then(([appMod, dbMod])=>{
+    const { initializeApp } = appMod;
+    _fbRef=dbMod.ref; _fbSet=dbMod.set; _fbOnValue=dbMod.onValue; _fbGet=dbMod.get;
+    try {
+      const app=initializeApp(FIREBASE_CONFIG);
+      db=dbMod.getDatabase(app);
+      document.getElementById('lobby-status').textContent='Connected — enter a code or create a new game';
+    } catch(e){
+      showError('Firebase init failed: '+e.message+'. Check your config values.');
+    }
+  }).catch(e=>{
+    showError('Failed to load Firebase SDK: '+e.message+'. Check your internet connection.');
+  });
+}
+
+function roomRef(code){ return _fbRef(db,'battlegrid/rooms/'+code); }
 
 async function saveState(s){
-  if(!currentRoomCode) return;
+  if(!currentRoomCode||!db||!_fbSet) return;
   const clean={...s, grid:(s.grid||[]).map(v=>v==null?0:v)};
-  await set(roomRef(currentRoomCode), clean);
+  await _fbSet(roomRef(currentRoomCode), clean);
 }
 
 function normaliseState(data){
@@ -512,26 +527,26 @@ function generateCode(){
 }
 
 async function createRoom(){
-  if(!firebaseReady){ alert('Firebase not connected'); return; }
+  if(!db){ alert('Firebase not connected yet — wait a moment and try again'); return; }
   const code=generateCode();
   const initial=makeInitialState(code);
   currentRoomCode=code;
   try {
-    await set(roomRef(code), initial);
+    await _fbSet(roomRef(code), initial);
   } catch(e){ alert('Error creating room: '+e.message); return; }
   showSideLobby(code, initial);
   subscribeToRoom(code);
 }
 
 async function joinRoom(){
-  if(!firebaseReady){ alert('Firebase not connected'); return; }
+  if(!db){ alert('Firebase not connected yet — wait a moment and try again'); return; }
   const input=document.getElementById('room-input').value.trim();
   if(input.length!==4||!/^\d{4}$/.test(input)){
     document.getElementById('lobby-status').textContent='Please enter a valid 4-digit code';
     return;
   }
   let snap;
-  try { snap=await get(roomRef(input)); } catch(e){ alert('Error: '+e.message); return; }
+  try { snap=await _fbGet(roomRef(input)); } catch(e){ alert('Error: '+e.message); return; }
   if(!snap.val()){
     document.getElementById('lobby-status').textContent='Room '+input+' not found. Check the code or create a new game.';
     return;
@@ -544,7 +559,7 @@ async function joinRoom(){
 
 function subscribeToRoom(code){
   if(roomUnsubscribe) roomUnsubscribe();
-  roomUnsubscribe=onValue(roomRef(code), snapshot=>{
+  roomUnsubscribe=_fbOnValue(roomRef(code), snapshot=>{
     const raw=snapshot.val();
     if(!raw) return;
     const data=normaliseState(raw);
@@ -592,7 +607,7 @@ async function joinAs(role){
   document.getElementById('btn-join-blue').disabled=true;
   document.getElementById('lobby-side-status').textContent='Joining...';
   let snap;
-  try { snap=await get(roomRef(currentRoomCode)); } catch(e){ alert('Error: '+e.message); return; }
+  try { snap=await _fbGet(roomRef(currentRoomCode)); } catch(e){ alert('Error: '+e.message); return; }
   let gs=normaliseState(snap.val());
   if(!gs) gs=makeInitialState(currentRoomCode);
   if(gs.players[role]){
