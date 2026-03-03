@@ -133,17 +133,37 @@ header h1{font-family:'Bebas Neue';font-size:clamp(2rem,5vw,3.5rem);letter-spaci
 <body>
 <div id="app">
 
-<!-- LOBBY -->
-<div id="lobby">
-  <h1>BATTLE GRID</h1>
-  <div class="subtitle">What you know is only half the battle</div>
-  <div id="firebase-error"></div>
-  <div id="lobby-status">Connecting...</div>
-  <div class="lobby-btns">
-    <button class="role-btn red" id="btn-join-red" onclick="joinAs('red')" disabled>🔴 PLAY AS P1</button>
-    <button class="role-btn blue" id="btn-join-blue" onclick="joinAs('blue')" disabled>🔵 PLAY AS P2</button>
+<!-- LOBBY: STEP 1 — Room Code -->
+<div id="lobby-code">
+  <div id="lobby">
+    <h1>BATTLE GRID</h1>
+    <div class="subtitle">What you know is only half the battle</div>
+    <div id="firebase-error"></div>
+    <div id="lobby-status">Enter a room code to join, or create a new game</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:320px;">
+      <input id="room-input" type="text" maxlength="4" placeholder="ENTER 4-DIGIT CODE"
+        style="font-family:'Share Tech Mono';font-size:1.8rem;letter-spacing:0.4em;text-align:center;width:100%;padding:14px;border-radius:8px;border:1px solid rgba(0,180,255,0.4);background:rgba(0,180,255,0.05);color:#eef;text-transform:uppercase;outline:none;"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)"
+        onkeydown="if(event.key==='Enter') joinRoom()"
+      />
+      <button class="role-btn blue" style="width:100%;font-size:1.1rem;padding:14px;" onclick="joinRoom()">JOIN ROOM</button>
+      <div style="font-family:'Share Tech Mono';font-size:0.75rem;color:rgba(200,220,255,0.3);">— OR —</div>
+      <button class="role-btn red" style="width:100%;font-size:1.1rem;padding:14px;" onclick="createRoom()">CREATE NEW GAME</button>
+    </div>
+    <button class="lobby-reset-btn" onclick="resetGame()">⟳ Reset / Leave Room</button>
   </div>
-  <button class="lobby-reset-btn" onclick="resetGame()">⟳ Reset Game</button>
+</div>
+
+<!-- LOBBY: STEP 2 — Choose Side -->
+<div id="lobby-side" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:90vh;gap:24px;">
+  <h1 style="font-family:'Bebas Neue';font-size:clamp(3rem,10vw,6rem);letter-spacing:0.1em;background:linear-gradient(180deg,#fff 0%,#88ccff 50%,#0088ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">BATTLE GRID</h1>
+  <div id="room-code-display" style="font-family:'Share Tech Mono';font-size:1rem;color:rgba(200,220,255,0.5);letter-spacing:0.3em;"></div>
+  <div id="lobby-side-status" style="font-family:'Share Tech Mono';font-size:0.85rem;color:rgba(200,220,255,0.5);text-align:center;max-width:400px;min-height:2em;"></div>
+  <div class="lobby-btns">
+    <button class="role-btn red" id="btn-join-red" onclick="joinAs('red')">🔴 PLAY AS P1</button>
+    <button class="role-btn blue" id="btn-join-blue" onclick="joinAs('blue')">🔵 PLAY AS P2</button>
+  </div>
+  <button class="lobby-reset-btn" onclick="leaveRoom()">← Back</button>
 </div>
 
 <!-- GAME -->
@@ -207,7 +227,8 @@ header h1{font-family:'Bebas Neue';font-size:clamp(2rem,5vw,3.5rem);letter-spaci
 <div id="waiting-overlay">
   <div class="spinner"></div>
   <p id="waiting-msg">WAITING FOR OPPONENT</p>
-  <small>Share this page URL with your opponent</small>
+  <div id="waiting-code" style="font-family:'Bebas Neue';font-size:3rem;letter-spacing:0.4em;color:var(--gold);text-shadow:0 0 20px rgba(255,204,0,0.5);margin:4px 0;"></div>
+  <small>Share this room code with your opponent</small>
 </div>
 
 <!-- END -->
@@ -416,66 +437,63 @@ function eligibleQuestions(gs){
 // ================================================================
 // FIREBASE INIT
 // ================================================================
-let db, gameRef;
+let db, gameRef, roomUnsubscribe=null;
 let myRole=null;
+let currentRoomCode=null;
 let gameState=null;
 
-// Local UI state (not synced — each player manages their own)
-let localPhase='question';
-let localSelectedTile=null;
-let localStealTile=null;
-let localAnswered=false;
-let localCurrentQ=null;
-let localStealAvailable=false;
+// Local UI state
+let localPhase='question', localSelectedTile=null, localStealTile=null;
+let localAnswered=false, localCurrentQ=null, localStealAvailable=false;
 
+let firebaseReady=false;
 try {
   const app=initializeApp(FIREBASE_CONFIG);
   db=getDatabase(app);
-  gameRef=ref(db,'battlegrid/game');
-  // Subscribe to real-time updates
-  onValue(gameRef, snapshot=>{
-    const data=snapshot.val();
-    if(!data) return;
-    // Restore array from Firebase object
-    if(data.grid && !Array.isArray(data.grid)){
-      data.grid=Object.values(data.grid).map(v=>v===0?null:v);
-    }
-    // Fix null grid slots (Firebase drops null array entries)
-    if(Array.isArray(data.grid)){
-      for(let i=0;i<GRID_SIZE;i++) if(data.grid[i]===undefined) data.grid[i]=null;
-    }
-    if(data.usedQ && !Array.isArray(data.usedQ)) data.usedQ=Object.values(data.usedQ);
-    gameState=data;
-    onRemoteStateUpdate(data);
-  });
-  document.getElementById('lobby-status').textContent='Connected — choose your side';
-  document.getElementById('btn-join-red').disabled=false;
-  document.getElementById('btn-join-blue').disabled=false;
+  firebaseReady=true;
+  document.getElementById('lobby-status').textContent='Connected — enter a code or create a new game';
 } catch(e) {
   const errEl=document.getElementById('firebase-error');
   errEl.style.display='block';
-  errEl.textContent='Firebase connection failed. Check your config values at the top of the script. Error: '+e.message;
+  errEl.textContent='Firebase connection failed. Check config values at the top of the script. Error: '+e.message;
   document.getElementById('lobby-status').textContent='Connection error — see above';
 }
 
+function roomRef(code){ return ref(db,'battlegrid/rooms/'+code); }
+
 async function saveState(s){
-  // Ensure grid has no undefined — Firebase can't handle them
-  const clean={...s};
-  clean.grid=(s.grid||[]).map(v=>v==null?0:v);
-  await set(gameRef, clean);
+  if(!currentRoomCode) return;
+  const clean={...s, grid:(s.grid||[]).map(v=>v==null?0:v)};
+  await set(roomRef(currentRoomCode), clean);
+}
+
+function normaliseState(data){
+  if(!data) return null;
+  if(data.grid&&!Array.isArray(data.grid)){
+    const arr=[];
+    for(let i=0;i<GRID_SIZE;i++) arr[i]=data.grid[i]!==undefined?data.grid[i]:0;
+    data.grid=arr;
+  }
+  if(Array.isArray(data.grid)){
+    for(let i=0;i<GRID_SIZE;i++) if(data.grid[i]===undefined) data.grid[i]=0;
+  }
+  if(data.usedQ&&!Array.isArray(data.usedQ)) data.usedQ=Object.values(data.usedQ);
+  if(!data.players) data.players={red:false,blue:false};
+  return data;
 }
 
 // ================================================================
 // INITIAL STATE
 // ================================================================
-function makeInitialState(){
+function makeInitialState(code){
   return {
+    roomCode:code,
     players:{red:false,blue:false},
     started:false,
     turn:'red',
     scores:{red:0,blue:0},
     hand:{red:[],blue:[]},
-    grid:Array(GRID_SIZE).fill(0), // 0 = null (Firebase-safe)
+    grid:Array(GRID_SIZE).fill(0),
     usedQ:[],
     gameOver:false,
     activeCats:CAT_KEYS.slice(0,2),
@@ -487,65 +505,134 @@ function makeInitialState(){
 }
 
 // ================================================================
-// LOBBY
+// ROOM MANAGEMENT
 // ================================================================
-function refreshLobbyUI(gs){
-  const btnRed=document.getElementById('btn-join-red');
-  const btnBlue=document.getElementById('btn-join-blue');
-  const lobbyStatus=document.getElementById('lobby-status');
-  if(!gs){
-    btnRed.disabled=false; btnBlue.disabled=false;
-    lobbyStatus.textContent='No game yet — pick a side to create one';
+function generateCode(){
+  return String(Math.floor(1000+Math.random()*9000));
+}
+
+async function createRoom(){
+  if(!firebaseReady){ alert('Firebase not connected'); return; }
+  const code=generateCode();
+  const initial=makeInitialState(code);
+  currentRoomCode=code;
+  try {
+    await set(roomRef(code), initial);
+  } catch(e){ alert('Error creating room: '+e.message); return; }
+  showSideLobby(code, initial);
+  subscribeToRoom(code);
+}
+
+async function joinRoom(){
+  if(!firebaseReady){ alert('Firebase not connected'); return; }
+  const input=document.getElementById('room-input').value.trim();
+  if(input.length!==4||!/^\d{4}$/.test(input)){
+    document.getElementById('lobby-status').textContent='Please enter a valid 4-digit code';
     return;
   }
+  let snap;
+  try { snap=await get(roomRef(input)); } catch(e){ alert('Error: '+e.message); return; }
+  if(!snap.val()){
+    document.getElementById('lobby-status').textContent='Room '+input+' not found. Check the code or create a new game.';
+    return;
+  }
+  currentRoomCode=input;
+  const gs=normaliseState(snap.val());
+  showSideLobby(input, gs);
+  subscribeToRoom(input);
+}
+
+function subscribeToRoom(code){
+  if(roomUnsubscribe) roomUnsubscribe();
+  roomUnsubscribe=onValue(roomRef(code), snapshot=>{
+    const raw=snapshot.val();
+    if(!raw) return;
+    const data=normaliseState(raw);
+    gameState=data;
+    // Only handle remote updates if we've already joined as a player
+    if(myRole) onRemoteStateUpdate(data);
+    else updateSideLobbyButtons(data);
+  });
+}
+
+function showSideLobby(code, gs){
+  document.getElementById('lobby-code').style.display='none';
+  document.getElementById('lobby-side').style.display='flex';
+  document.getElementById('room-code-display').textContent='ROOM CODE: '+code;
+  updateSideLobbyButtons(gs);
+}
+
+function updateSideLobbyButtons(gs){
+  const btnRed=document.getElementById('btn-join-red');
+  const btnBlue=document.getElementById('btn-join-blue');
+  const status=document.getElementById('lobby-side-status');
+  if(!gs){ btnRed.disabled=false; btnBlue.disabled=false; return; }
   btnRed.disabled=!!gs.players.red;
   btnBlue.disabled=!!gs.players.blue;
-  if(gs.players.red&&gs.players.blue) lobbyStatus.textContent='Both players joined!';
-  else if(gs.players.red) lobbyStatus.textContent='🔴 P1 joined — waiting for 🔵 P2...';
-  else if(gs.players.blue) lobbyStatus.textContent='🔵 P2 joined — waiting for 🔴 P1...';
-  else lobbyStatus.textContent='Pick a side to join';
+  if(gs.players.red&&gs.players.blue) status.textContent='Both players joined — game starting!';
+  else if(gs.players.red) status.textContent='🔴 P1 has joined — waiting for 🔵 P2...';
+  else if(gs.players.blue) status.textContent='🔵 P2 has joined — waiting for 🔴 P1...';
+  else status.textContent='Choose your side';
+}
+
+function leaveRoom(){
+  if(roomUnsubscribe){ roomUnsubscribe(); roomUnsubscribe=null; }
+  currentRoomCode=null; myRole=null;
+  resetLocalUI();
+  document.getElementById('lobby-side').style.display='none';
+  document.getElementById('lobby-code').style.display='block';
+  document.getElementById('room-input').value='';
+  document.getElementById('lobby-status').textContent='Enter a code or create a new game';
 }
 
 async function joinAs(role){
-  let gs;
-  try {
-    const snap=await get(gameRef);
-    gs=snap.val();
-  } catch(e){ alert('Firebase error: '+e.message); return; }
-
-  if(!gs) gs=makeInitialState();
-  // Restore Firebase arrays
-  if(gs.grid&&!Array.isArray(gs.grid)) gs.grid=Object.values(gs.grid);
-  for(let i=0;i<GRID_SIZE;i++) if(gs.grid[i]===undefined) gs.grid[i]=0;
-  if(gs.usedQ&&!Array.isArray(gs.usedQ)) gs.usedQ=Object.values(gs.usedQ);
-
-  if(gs.players[role]){ document.getElementById('lobby-status').textContent='That side is already taken!'; return; }
-
+  if(!currentRoomCode) return;
+  // Disable buttons immediately to prevent double-click
+  document.getElementById('btn-join-red').disabled=true;
+  document.getElementById('btn-join-blue').disabled=true;
+  document.getElementById('lobby-side-status').textContent='Joining...';
+  let snap;
+  try { snap=await get(roomRef(currentRoomCode)); } catch(e){ alert('Error: '+e.message); return; }
+  let gs=normaliseState(snap.val());
+  if(!gs) gs=makeInitialState(currentRoomCode);
+  if(gs.players[role]){
+    document.getElementById('lobby-side-status').textContent='That side is already taken!';
+    updateSideLobbyButtons(gs);
+    return;
+  }
+  // Set myRole BEFORE saving so onValue callback (if it fires) knows we're in-game
   myRole=role;
   gs.players[role]=true;
-  if(gs.players.red&&gs.players.blue){
+  const bothJoined=gs.players.red&&gs.players.blue;
+  if(bothJoined){
     gs.started=true;
     gs.statusMsg='Battle Grid begins! Red goes first.';
   }
   await saveState(gs);
   gameState=gs;
-
-  document.getElementById('lobby').style.display='none';
+  // Transition UI explicitly — don't wait for onValue
+  document.getElementById('lobby-side').style.display='none';
   document.getElementById('game').style.display='block';
-  if(!gs.started) showWaiting('WAITING FOR OPPONENT');
-  else { hideWaiting(); resetLocalUI(); }
+  if(!bothJoined){
+    showWaiting('WAITING FOR OPPONENT\n\nRoom: '+currentRoomCode);
+  } else {
+    hideWaiting();
+    resetLocalUI();
+  }
   renderAll();
 }
 
 async function resetGame(){
-  myRole=null;
-  resetLocalUI();
-  gameState=null;
-  try { await saveState(makeInitialState()); } catch(e){}
-  document.getElementById('lobby').style.display='flex';
+  if(roomUnsubscribe){ roomUnsubscribe(); roomUnsubscribe=null; }
+  myRole=null; currentRoomCode=null;
+  resetLocalUI(); gameState=null;
+  document.getElementById('lobby-code').style.display='block';
+  document.getElementById('lobby-side').style.display='none';
   document.getElementById('game').style.display='none';
   document.getElementById('end-overlay').classList.remove('show');
   hideWaiting();
+  document.getElementById('room-input').value='';
+  document.getElementById('lobby-status').textContent='Enter a code or create a new game';
   document.getElementById('question-text').textContent='Waiting for game to start...';
   document.getElementById('answers').innerHTML='';
 }
@@ -559,13 +646,18 @@ function resetLocalUI(){
 // REMOTE STATE UPDATE
 // ================================================================
 function onRemoteStateUpdate(gs){
-  if(!myRole) { refreshLobbyUI(gs); return; }
+  // Not in game yet — update side lobby buttons if visible
+  if(!myRole){
+    if(document.getElementById('lobby-side').style.display!=='none') updateSideLobbyButtons(gs);
+    return;
+  }
   if(gs.gameOver){ showEndScreen(gs); return; }
-  if(gs.started) hideWaiting();
-  else { showWaiting('WAITING FOR OPPONENT'); return; }
-  // If turn just switched to me, reset local UI for fresh question
-  if(gs.turn===myRole && !localAnswered){
-    localPhase='question'; localCurrentQ=null; localStealAvailable=false;
+  if(!gs.started){ showWaiting('WAITING FOR OPPONENT\n\nRoom: '+currentRoomCode); return; }
+  hideWaiting();
+  // Only reset local question UI when it's now our turn AND we weren't already mid-turn
+  // (i.e. the turn just switched TO us from the opponent)
+  const justBecameMyTurn = gs.turn===myRole && !localAnswered && localPhase==='question' && !localCurrentQ;
+  if(justBecameMyTurn){
     document.getElementById('question-text').textContent='Press NEXT Q when ready!';
     document.getElementById('answers').innerHTML='';
   }
@@ -1043,7 +1135,8 @@ function skipTurn(){
 // END / WAITING
 // ================================================================
 function showWaiting(msg){
-  document.getElementById('waiting-msg').textContent=msg||'WAITING...';
+  document.getElementById('waiting-msg').textContent='WAITING FOR OPPONENT';
+  document.getElementById('waiting-code').textContent=currentRoomCode||'';
   document.getElementById('waiting-overlay').classList.add('show');
 }
 function hideWaiting(){ document.getElementById('waiting-overlay').classList.remove('show'); }
@@ -1063,7 +1156,8 @@ function showEndScreen(gs){
 }
 
 // Expose onclick handlers
-window.joinAs=joinAs; window.resetGame=resetGame;
+window.joinAs=joinAs; window.resetGame=resetGame; window.leaveRoom=leaveRoom;
+window.createRoom=createRoom; window.joinRoom=joinRoom;
 window.nextQuestion=nextQuestion; window.activateSteal=activateSteal;
 window.enterPlaceMode=enterPlaceMode; window.skipTurn=skipTurn;
 
