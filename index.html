@@ -254,14 +254,13 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
 // CONFIG — replace YOUR_* values with your Firebase config
 // ============================================================
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
-  authDomain: "battle-grid-7fa4f.firebaseapp.com",
-  databaseURL: "https://battle-grid-7fa4f-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "battle-grid-7fa4f",
-  storageBucket: "battle-grid-7fa4f.firebasestorage.app",
-  messagingSenderId: "775436519324",
-  appId: "1:775436519324:web:34a3f1aa6b29882c9baa59",
-  measurementId: "G-8Q88LCZ2W1"
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL:       "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
 };
 // ============================================================
 
@@ -614,10 +613,20 @@ function onStateUpdate(s){
   document.getElementById('waiting').classList.remove('show');
   document.getElementById('game-screen').style.display='flex';
 
-  // If it just became our turn (turn changed to us), reset local question state
+  // If it just became our turn, clear question display
   if(s.turn===myRole && lPhase==='idle'){
     document.getElementById('qtext').textContent='Press NEXT Q to start your turn!';
     document.getElementById('answers').innerHTML='';
+  }
+
+  // If it is the opponent's turn, show their question (read-only, no answer buttons clickable)
+  if(s.turn!==myRole){
+    if(s.currentQ){
+      renderOpponentQuestion(s.currentQ);
+    } else {
+      document.getElementById('qtext').textContent="Waiting for opponent's question...";
+      document.getElementById('answers').innerHTML='';
+    }
   }
 
   renderGame();
@@ -805,7 +814,9 @@ function nextQuestion(){
   lQ={q:pick.q.q,choices,answerIdx:choices.indexOf(pick.q.a),tileId:t.id,cat:pick.q.cat};
   lPhase='question';
   lStealAvail=false;
-  const updated={...s,usedQ:[...s.usedQ,pick.i],lastStolen:null,msg:'Question '+(s.usedQ.length+1)};
+  // Store question text+choices in Firebase so opponent can see it (no answerIdx = no cheating)
+  const sharedQ={q:pick.q.q,choices};
+  const updated={...s,usedQ:[...s.usedQ,pick.i],lastStolen:null,msg:'Question '+(s.usedQ.length+1),currentQ:sharedQ};
   gameState=updated;
   saveState(updated);
   showQuestion();
@@ -819,6 +830,17 @@ function showQuestion(){
     const b=document.createElement('button');b.className='abtn';
     b.innerHTML=`<span class="aopt">${l}.</span>${lQ.choices[i]}`;
     b.addEventListener('click',(()=>()=>selectAnswer(i))());
+    el.appendChild(b);
+  });
+}
+
+function renderOpponentQuestion(q){
+  document.getElementById('qtext').textContent=q.q;
+  const el=document.getElementById('answers');el.innerHTML='';
+  ['A','B','C','D'].forEach((l,i)=>{
+    const b=document.createElement('button');b.className='abtn';b.disabled=true;
+    b.style.opacity='0.6';
+    b.innerHTML=`<span class="aopt">${l}.</span>${q.choices[i]}`;
     el.appendChild(b);
   });
 }
@@ -897,6 +919,7 @@ function placeTile(idx){
   if(myRole==='red')updated.handRed=myHand; else updated.handBlue=myHand;
   updated.grid=newGrid;
   updated.msg=(tile?tile.l:'Tile')+' placed!';
+  updated.currentQ=null;
   checkSets(updated,myRole);
   if(!updated.gameOver){
     updated.turn=opp(myRole);
@@ -952,7 +975,7 @@ function attemptSteal(idx){
 function failSteal(){
   lPhase='idle';lStealTile=null;lQ=null;lStealAvail=false;
   document.getElementById('steal-bar').classList.remove('show');
-  const updated={...gameState,turn:opp(myRole),msg:'Steal failed — '+opp(myRole).toUpperCase()+"'s turn!"};
+  const updated={...gameState,turn:opp(myRole),msg:'Steal failed — '+opp(myRole).toUpperCase()+"'s turn!",currentQ:null};
   checkForced(updated);gameState=updated;saveState(updated);
   document.getElementById('qtext').textContent='Press NEXT Q when ready!';
   document.getElementById('answers').innerHTML='';
@@ -965,7 +988,7 @@ function failSteal(){
 function skipTurn(){
   if(!gameState||gameState.turn!==myRole)return;
   lPhase='idle';lQ=null;lTile=null;lStealAvail=false;
-  const updated={...gameState,turn:opp(myRole),msg:'Turn skipped.'};
+  const updated={...gameState,turn:opp(myRole),msg:'Turn skipped.',currentQ:null};
   checkForced(updated);gameState=updated;saveState(updated);
   document.getElementById('qtext').textContent='Press NEXT Q when ready!';
   document.getElementById('answers').innerHTML='';
