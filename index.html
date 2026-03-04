@@ -6,128 +6,126 @@
 <title>BATTLE GRID</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap');
-:root {
-  --red:#ff2244; --blue:#0088ff; --gold:#ffcc00;
-  --bg:#080c14; --cell-border:rgba(0,180,255,0.2);
-}
+:root{--red:#ff2244;--blue:#0088ff;--gold:#ffcc00;--bg:#080c14;--cell-border:rgba(0,180,255,0.2);}
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:#eef;font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(0,136,255,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 50%,rgba(255,34,68,0.06) 0%,transparent 60%);pointer-events:none;z-index:0;}
 #app{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:10px;}
 
-/* LOBBY */
-#lobby{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90vh;gap:24px;}
-#lobby h1{font-family:'Bebas Neue';font-size:clamp(3rem,10vw,6rem);letter-spacing:0.1em;background:linear-gradient(180deg,#fff 0%,#88ccff 50%,#0088ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 20px rgba(0,136,255,0.7));}
-#lobby .subtitle{font-size:1rem;color:rgba(200,220,255,0.6);letter-spacing:0.3em;text-transform:uppercase;}
-.lobby-btns{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;}
-.role-btn{font-family:'Bebas Neue';font-size:1.5rem;letter-spacing:0.15em;padding:18px 44px;border-radius:10px;border:none;cursor:pointer;transition:all 0.2s;}
+/* ---- SCREENS ---- */
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:90vh;gap:20px;}
+.screen.active{display:flex;}
+.bg-title{font-family:'Bebas Neue';font-size:clamp(3rem,10vw,6rem);letter-spacing:0.1em;background:linear-gradient(180deg,#fff 0%,#88ccff 50%,#0088ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 20px rgba(0,136,255,0.7));}
+.subtitle{font-size:1rem;color:rgba(200,220,255,0.6);letter-spacing:0.3em;text-transform:uppercase;}
+.status-line{font-family:'Share Tech Mono';font-size:0.85rem;color:rgba(200,220,255,0.5);text-align:center;min-height:1.4em;max-width:420px;}
+.error-line{font-family:'Share Tech Mono';font-size:0.8rem;color:#ff6666;text-align:center;max-width:420px;padding:8px;border:1px solid rgba(255,100,100,0.3);border-radius:6px;background:rgba(255,0,0,0.05);display:none;}
+.btn-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+.role-btn{font-family:'Bebas Neue';font-size:1.4rem;letter-spacing:0.15em;padding:16px 40px;border-radius:10px;border:none;cursor:pointer;transition:all 0.2s;}
 .role-btn.red{background:linear-gradient(135deg,#880022,#ff2244);color:white;box-shadow:0 0 25px rgba(255,34,68,0.4);}
 .role-btn.red:hover:not(:disabled){box-shadow:0 0 40px rgba(255,34,68,0.7);transform:translateY(-2px);}
 .role-btn.blue{background:linear-gradient(135deg,#003388,#0088ff);color:white;box-shadow:0 0 25px rgba(0,136,255,0.4);}
 .role-btn.blue:hover:not(:disabled){box-shadow:0 0 40px rgba(0,136,255,0.7);transform:translateY(-2px);}
-.role-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none !important;}
-#lobby-status{font-family:'Share Tech Mono';font-size:0.85rem;color:rgba(200,220,255,0.5);text-align:center;min-height:2em;max-width:400px;}
-.lobby-reset-btn{font-family:'Rajdhani';font-size:0.85rem;padding:8px 20px;border-radius:6px;border:1px solid rgba(200,220,255,0.2);background:rgba(255,255,255,0.05);color:rgba(200,220,255,0.4);cursor:pointer;transition:all 0.2s;}
-.lobby-reset-btn:hover{background:rgba(255,50,50,0.15);border-color:rgba(255,50,50,0.4);color:#ff8888;}
-#firebase-error{color:#ff6666;font-family:'Share Tech Mono';font-size:0.78rem;text-align:center;max-width:440px;line-height:1.5;display:none;padding:10px;border:1px solid rgba(255,100,100,0.3);border-radius:6px;background:rgba(255,0,0,0.05);}
+.role-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important;}
+.plain-btn{font-family:'Rajdhani';font-size:0.9rem;padding:8px 20px;border-radius:6px;border:1px solid rgba(200,220,255,0.2);background:rgba(255,255,255,0.05);color:rgba(200,220,255,0.5);cursor:pointer;transition:all 0.2s;}
+.plain-btn:hover{border-color:rgba(200,220,255,0.4);color:#eef;}
+.big-code{font-family:'Bebas Neue';font-size:4rem;letter-spacing:0.4em;color:var(--gold);text-shadow:0 0 20px rgba(255,204,0,0.5);}
+input.code-input{font-family:'Share Tech Mono';font-size:2rem;letter-spacing:0.4em;text-align:center;width:200px;padding:12px;border-radius:8px;border:2px solid rgba(0,180,255,0.4);background:rgba(0,180,255,0.05);color:#eef;outline:none;}
+input.code-input:focus{border-color:rgba(0,180,255,0.8);}
+.action-btn{font-family:'Bebas Neue';font-size:1.2rem;letter-spacing:0.15em;padding:14px 36px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(135deg,#003388,#0088ff);color:white;transition:all 0.2s;}
+.action-btn:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,136,255,0.4);}
 
-/* GAME */
-#game{display:none;}
-header{text-align:center;padding:8px 0 4px;}
-header h1{font-family:'Bebas Neue';font-size:clamp(2rem,5vw,3.5rem);letter-spacing:0.1em;background:linear-gradient(180deg,#fff 0%,#88ccff 50%,#0088ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 15px rgba(0,136,255,0.7));line-height:1;}
-#my-role-badge{text-align:center;margin-bottom:6px;font-family:'Bebas Neue';font-size:1.1rem;letter-spacing:0.15em;}
+/* ---- GAME ---- */
+#game-screen{display:none;flex-direction:column;min-height:100vh;}
+#game-screen.active{display:flex;}
+header{text-align:center;padding:6px 0 2px;}
+header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spacing:0.1em;background:linear-gradient(180deg,#fff 0%,#88ccff 50%,#0088ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;}
+#role-badge{text-align:center;font-family:'Bebas Neue';font-size:1rem;letter-spacing:0.15em;margin-bottom:4px;}
+#scorebar{display:flex;align-items:center;gap:10px;padding:4px 0;}
+.player-panel{flex:1;background:rgba(255,255,255,0.03);border:1px solid;border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px;transition:box-shadow 0.3s;}
+.player-panel.red{border-color:rgba(255,34,68,0.4);}
+.player-panel.blue{border-color:rgba(0,136,255,0.4);}
+.player-panel.red.myturn{box-shadow:0 0 18px rgba(255,34,68,0.5);border-color:var(--red);}
+.player-panel.blue.myturn{box-shadow:0 0 18px rgba(0,136,255,0.5);border-color:var(--blue);}
+.player-panel.mine{outline:2px solid rgba(255,204,0,0.35);outline-offset:2px;}
+.pname{font-family:'Bebas Neue';font-size:0.9rem;}
+.pscore{font-family:'Bebas Neue';font-size:2rem;line-height:1;}
+.player-panel.red .pscore{color:var(--red);}
+.player-panel.blue .pscore{color:var(--blue);}
+.ptiles{font-family:'Share Tech Mono';font-size:0.6rem;color:rgba(200,220,255,0.4);}
+.vs{font-family:'Bebas Neue';font-size:1.2rem;color:rgba(200,220,255,0.25);}
+#cat-bar{display:flex;gap:6px;flex-wrap:wrap;padding:3px 0;align-items:center;min-height:32px;}
+.cat-pill{padding:3px 10px;border-radius:20px;border:1px solid;font-family:'Rajdhani';font-size:0.75rem;font-weight:600;display:flex;align-items:center;gap:5px;}
+.cat-next{font-family:'Share Tech Mono';font-size:0.65rem;color:rgba(200,220,255,0.3);padding:2px 6px;}
+#arena{display:grid;grid-template-columns:150px 1fr 150px;gap:8px;align-items:start;flex:1;}
+.side-panel{display:flex;flex-direction:column;gap:6px;}
+.pbox{background:rgba(255,255,255,0.02);border:1px solid rgba(200,220,255,0.07);border-radius:8px;padding:7px;}
+.pbox h3{font-family:'Bebas Neue';font-size:0.8rem;letter-spacing:0.1em;color:rgba(200,220,255,0.35);margin-bottom:5px;}
+.hand-tiles{display:flex;flex-direction:column;gap:3px;}
+.htile{padding:3px 7px;border-radius:5px;border:1px solid rgba(200,220,255,0.12);background:rgba(255,255,255,0.03);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:5px;font-size:0.75rem;}
+.htile:hover{border-color:rgba(200,220,255,0.3);}
+.htile.sel{border-color:var(--gold);background:rgba(255,204,0,0.08);}
+.catprog{display:flex;flex-direction:column;gap:4px;}
+.cprow{font-size:0.65rem;color:rgba(200,220,255,0.45);}
+.cpbg{height:3px;background:rgba(255,255,255,0.07);border-radius:2px;margin-top:2px;}
+.cpbar{height:3px;border-radius:2px;transition:width 0.3s;}
+#grid-wrap{display:flex;justify-content:center;margin-bottom:6px;}
+#grid{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;width:100%;max-width:360px;}
+.cell{aspect-ratio:1;border:1px solid var(--cell-border);border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;background:rgba(255,255,255,0.02);position:relative;overflow:hidden;}
+.cell:hover{border-color:rgba(0,180,255,0.35);}
+.temoji{font-size:1.3rem;line-height:1;}
+.tlabel{font-size:0.45rem;font-family:'Share Tech Mono';text-align:center;margin-top:1px;opacity:0.85;padding:0 2px;}
+.licon{position:absolute;top:2px;right:2px;font-size:0.55rem;opacity:0.6;}
+.cell.red{background:rgba(255,34,68,0.13);border-color:rgba(255,34,68,0.35);}
+.cell.blue{background:rgba(0,136,255,0.13);border-color:rgba(0,136,255,0.35);}
+.cell.locked.red{background:rgba(255,34,68,0.22);border-color:var(--red);}
+.cell.locked.blue{background:rgba(0,136,255,0.22);border-color:var(--blue);}
+.cell.place-target{border-color:rgba(0,255,136,0.6);background:rgba(0,255,136,0.07);cursor:crosshair;}
+.cell.place-target:hover{border-color:rgba(0,255,136,1);background:rgba(0,255,136,0.13);}
+.cell.steal-click{cursor:crosshair;}
+.cell.steal-click:hover{border-color:rgba(255,204,0,0.4);background:rgba(255,204,0,0.05);}
+#qarea{background:rgba(255,255,255,0.02);border:1px solid rgba(200,220,255,0.07);border-radius:8px;padding:10px;}
+#turn-ind{font-family:'Bebas Neue';font-size:1rem;letter-spacing:0.15em;text-align:center;margin-bottom:6px;padding:3px;border-radius:4px;}
+#turn-ind.red{color:var(--red);}
+#turn-ind.blue{color:var(--blue);}
+#turn-ind.neutral{color:rgba(200,220,255,0.4);}
+#qtext{font-size:0.9rem;font-weight:600;color:rgba(220,235,255,0.9);line-height:1.4;min-height:2.4em;margin-bottom:8px;text-align:center;}
+#answers{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px;}
+.abtn{padding:7px 9px;border-radius:5px;border:1px solid rgba(200,220,255,0.18);background:rgba(255,255,255,0.03);color:#eef;font-family:'Rajdhani';font-size:0.82rem;font-weight:600;cursor:pointer;text-align:left;transition:all 0.15s;}
+.abtn:hover:not(:disabled){border-color:rgba(0,180,255,0.5);background:rgba(0,180,255,0.08);}
+.abtn:disabled{cursor:default;opacity:0.7;}
+.abtn.correct{background:rgba(0,255,136,0.13);border-color:#00ff88;color:#00ff88;}
+.abtn.wrong{background:rgba(255,34,68,0.13);border-color:#ff2244;color:#ff8899;}
+.aopt{font-family:'Share Tech Mono';font-size:0.7rem;color:rgba(200,220,255,0.35);margin-right:3px;}
+#controls{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.cbtn{font-family:'Bebas Neue';letter-spacing:0.1em;font-size:0.95rem;padding:7px 16px;border-radius:6px;border:1px solid rgba(200,220,255,0.18);background:rgba(255,255,255,0.04);color:#eef;cursor:pointer;transition:all 0.2s;}
+.cbtn:hover:not(:disabled){border-color:rgba(0,180,255,0.4);background:rgba(0,180,255,0.08);}
+.cbtn:disabled{opacity:0.3;cursor:not-allowed;}
+#new-cat{display:none;margin-top:6px;padding:5px 10px;border-radius:5px;font-family:'Bebas Neue';font-size:0.85rem;letter-spacing:0.1em;text-align:center;}
+#statusbar{font-family:'Share Tech Mono';font-size:0.68rem;color:rgba(200,220,255,0.45);text-align:center;padding:4px 0;min-height:1.5em;}
+#steal-bar{display:none;text-align:center;padding:4px 8px;margin-top:3px;background:linear-gradient(90deg,transparent,rgba(255,204,0,0.1),transparent);border:1px solid rgba(255,204,0,0.35);border-radius:5px;font-family:'Bebas Neue';font-size:0.8rem;letter-spacing:0.12em;color:var(--gold);}
+#steal-bar.show{display:block;}
 
-#scorebar{display:flex;align-items:center;gap:10px;padding:6px 0;}
-.player-panel{flex:1;background:rgba(255,255,255,0.03);border:1px solid;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:10px;transition:box-shadow 0.3s;}
-.player-panel.red{border-color:rgba(255,34,68,0.5);}
-.player-panel.blue{border-color:rgba(0,136,255,0.5);}
-.player-panel.red.active-turn{box-shadow:0 0 20px rgba(255,34,68,0.4);border-color:var(--red);}
-.player-panel.blue.active-turn{box-shadow:0 0 20px rgba(0,136,255,0.4);border-color:var(--blue);}
-.player-panel.my-panel{outline:2px solid rgba(255,204,0,0.4);outline-offset:2px;}
-.pname{font-family:'Bebas Neue';font-size:1rem;letter-spacing:0.05em;}
-.score{font-family:'Bebas Neue';font-size:2.2rem;line-height:1;}
-.player-panel.red .score{color:var(--red);text-shadow:0 0 15px rgba(255,34,68,0.6);}
-.player-panel.blue .score{color:var(--blue);text-shadow:0 0 15px rgba(0,136,255,0.6);}
-.tile-count{font-family:'Share Tech Mono';font-size:0.65rem;color:rgba(200,220,255,0.4);}
-.vs-badge{font-family:'Bebas Neue';font-size:1.4rem;color:rgba(200,220,255,0.3);}
-
-#cat-bar{display:flex;gap:8px;flex-wrap:wrap;padding:4px 0;align-items:center;min-height:36px;}
-.cat-pill{padding:4px 12px;border-radius:20px;border:1px solid;font-family:'Rajdhani';font-size:0.8rem;font-weight:600;letter-spacing:0.05em;display:flex;align-items:center;gap:6px;}
-.cat-queue-hint{font-family:'Share Tech Mono';font-size:0.7rem;color:rgba(200,220,255,0.35);padding:2px 8px;}
-
-#arena{display:grid;grid-template-columns:160px 1fr 160px;gap:10px;align-items:start;}
-.side-panel{display:flex;flex-direction:column;gap:8px;}
-.panel-box{background:rgba(255,255,255,0.02);border:1px solid rgba(200,220,255,0.08);border-radius:8px;padding:8px;}
-.panel-box h3{font-family:'Bebas Neue';font-size:0.85rem;letter-spacing:0.1em;color:rgba(200,220,255,0.4);margin-bottom:6px;}
-.hand-tiles{display:flex;flex-direction:column;gap:4px;}
-.hand-tile{padding:4px 8px;border-radius:5px;border:1px solid rgba(200,220,255,0.15);background:rgba(255,255,255,0.04);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:6px;font-size:0.78rem;}
-.hand-tile:hover{border-color:rgba(200,220,255,0.35);background:rgba(255,255,255,0.08);}
-.hand-tile.selected{border-color:var(--gold);background:rgba(255,204,0,0.1);box-shadow:0 0 8px rgba(255,204,0,0.3);}
-.he{font-size:1.1rem;}.hl{font-weight:600;}
-.cat-progress{display:flex;flex-direction:column;gap:5px;}
-.cat-prog-row{font-size:0.7rem;color:rgba(200,220,255,0.5);}
-.cat-prog-bar-bg{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;margin-top:2px;}
-.cat-prog-bar{height:4px;border-radius:2px;transition:width 0.3s;}
-
-#grid-wrapper{display:flex;justify-content:center;margin-bottom:8px;}
-#grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;width:100%;max-width:380px;}
-.cell{aspect-ratio:1;border:1px solid var(--cell-border);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;background:rgba(255,255,255,0.02);position:relative;overflow:hidden;}
-.cell:hover{border-color:rgba(0,180,255,0.4);background:rgba(0,180,255,0.04);}
-.tile-emoji{font-size:1.4rem;line-height:1;}
-.tile-label{font-size:0.5rem;font-family:'Share Tech Mono';text-align:center;margin-top:2px;opacity:0.85;padding:0 2px;}
-.lock-icon{position:absolute;top:2px;right:3px;font-size:0.6rem;opacity:0.7;}
-.cell.red{background:rgba(255,34,68,0.15);border-color:rgba(255,34,68,0.4);}
-.cell.blue{background:rgba(0,136,255,0.15);border-color:rgba(0,136,255,0.4);}
-.cell.locked.red{background:rgba(255,34,68,0.25);border-color:var(--red);box-shadow:inset 0 0 10px rgba(255,34,68,0.2);}
-.cell.locked.blue{background:rgba(0,136,255,0.25);border-color:var(--blue);box-shadow:inset 0 0 10px rgba(0,136,255,0.2);}
-.cell.opponent-hidden{cursor:default;}
-@keyframes place-flash{0%{box-shadow:0 0 0 3px rgba(255,204,0,0.8);}100%{box-shadow:0 0 0 0px rgba(255,204,0,0);}}
-.cell.newly-placed{animation:place-flash 0.4s ease-out;}
-.cell.place-target{border-color:rgba(0,255,136,0.6);background:rgba(0,255,136,0.08);cursor:crosshair;}
-.cell.place-target:hover{border-color:rgba(0,255,136,1);background:rgba(0,255,136,0.15);}
-.cell.steal-clickable{cursor:crosshair;}
-.cell.steal-clickable:hover{border-color:rgba(255,204,0,0.5);background:rgba(255,204,0,0.06);}
-
-#question-area{background:rgba(255,255,255,0.02);border:1px solid rgba(200,220,255,0.08);border-radius:10px;padding:12px;}
-#turn-indicator{font-family:'Bebas Neue';font-size:1.1rem;letter-spacing:0.15em;text-align:center;margin-bottom:8px;padding:4px;border-radius:4px;}
-#turn-indicator.red{color:var(--red);}
-#turn-indicator.blue{color:var(--blue);}
-#turn-indicator.neutral{color:rgba(200,220,255,0.5);}
-#question-text{font-size:0.95rem;font-weight:600;color:rgba(220,235,255,0.9);line-height:1.4;min-height:2.5em;margin-bottom:10px;text-align:center;}
-#answers{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;}
-.answer-btn{padding:8px 10px;border-radius:6px;border:1px solid rgba(200,220,255,0.2);background:rgba(255,255,255,0.04);color:#eef;font-family:'Rajdhani';font-size:0.85rem;font-weight:600;cursor:pointer;text-align:left;transition:all 0.15s;}
-.answer-btn:hover:not(:disabled){border-color:rgba(0,180,255,0.6);background:rgba(0,180,255,0.1);}
-.answer-btn:disabled{cursor:default;opacity:0.7;}
-.answer-btn.correct{background:rgba(0,255,136,0.15);border-color:#00ff88;color:#00ff88;}
-.answer-btn.wrong{background:rgba(255,34,68,0.15);border-color:#ff2244;color:#ff8899;}
-.opt{font-family:'Share Tech Mono';font-size:0.75rem;color:rgba(200,220,255,0.4);margin-right:4px;}
-#game-controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
-.ctrl-btn{font-family:'Bebas Neue';letter-spacing:0.12em;font-size:1rem;padding:8px 18px;border-radius:7px;border:1px solid rgba(200,220,255,0.2);background:rgba(255,255,255,0.05);color:#eef;cursor:pointer;transition:all 0.2s;}
-.ctrl-btn:hover:not(:disabled){border-color:rgba(0,180,255,0.5);background:rgba(0,180,255,0.1);}
-.ctrl-btn:disabled{opacity:0.35;cursor:not-allowed;}
-#new-cat-banner{display:none;margin-top:8px;padding:6px 12px;border-radius:6px;font-family:'Bebas Neue';font-size:0.9rem;letter-spacing:0.1em;text-align:center;}
-#status{font-family:'Share Tech Mono';font-size:0.72rem;color:rgba(200,220,255,0.5);text-align:center;padding:5px 0;min-height:1.6em;}
-#steal-mode-bar{display:none;text-align:center;padding:5px 10px;margin-top:4px;background:linear-gradient(90deg,transparent,rgba(255,204,0,0.12),transparent);border:1px solid rgba(255,204,0,0.4);border-radius:6px;font-family:'Bebas Neue';font-size:0.85rem;letter-spacing:0.15em;color:var(--gold);}
-#steal-mode-bar.show{display:block;}
-
-/* WAITING OVERLAY */
-#waiting-overlay{display:none;position:fixed;inset:0;background:rgba(8,12,20,0.93);z-index:200;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
-#waiting-overlay.show{display:flex;}
-#waiting-overlay p{font-family:'Bebas Neue';font-size:1.8rem;letter-spacing:0.15em;color:rgba(200,220,255,0.7);}
-#waiting-overlay small{font-family:'Share Tech Mono';font-size:0.75rem;color:rgba(200,220,255,0.35);text-align:center;}
+/* WAITING */
+#waiting{display:none;position:fixed;inset:0;background:rgba(8,12,20,0.94);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+#waiting.show{display:flex;}
+#waiting p{font-family:'Bebas Neue';font-size:1.6rem;letter-spacing:0.15em;color:rgba(200,220,255,0.7);}
+#waiting .wcode{font-family:'Bebas Neue';font-size:3.5rem;letter-spacing:0.4em;color:var(--gold);text-shadow:0 0 20px rgba(255,204,0,0.5);}
+#waiting small{font-family:'Share Tech Mono';font-size:0.7rem;color:rgba(200,220,255,0.3);}
 @keyframes spin{to{transform:rotate(360deg);}}
-.spinner{width:40px;height:40px;border:3px solid rgba(0,180,255,0.15);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;}
+.spinner{width:36px;height:36px;border:3px solid rgba(0,180,255,0.12);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite;}
 
-/* END OVERLAY */
-#end-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;align-items:center;justify-content:center;}
-#end-overlay.show{display:flex;}
-.end-box{background:linear-gradient(135deg,#0a1428,#060d1c);border:1px solid rgba(0,180,255,0.3);border-radius:16px;padding:40px 50px;text-align:center;max-width:500px;}
-#end-title{font-family:'Bebas Neue';font-size:3rem;letter-spacing:0.1em;color:#fff;filter:drop-shadow(0 0 20px rgba(0,136,255,0.8));}
-#end-msg{font-size:1rem;color:rgba(200,220,255,0.7);margin:10px 0 20px;}
-#end-scores{font-family:'Share Tech Mono';font-size:1rem;color:rgba(200,220,255,0.6);margin-bottom:24px;}
-.end-btn{font-family:'Bebas Neue';letter-spacing:0.15em;font-size:1.3rem;padding:12px 36px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(135deg,#0066cc,#0099ff);color:white;transition:all 0.2s;}
-.end-btn:hover{transform:translateY(-2px);}
-@keyframes steal-pulse-btn{from{transform:scale(1);}to{transform:scale(1.05);}}
+/* END */
+#end{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:500;align-items:center;justify-content:center;}
+#end.show{display:flex;}
+.endbox{background:linear-gradient(135deg,#0a1428,#060d1c);border:1px solid rgba(0,180,255,0.3);border-radius:14px;padding:36px 48px;text-align:center;max-width:480px;}
+#end-title{font-family:'Bebas Neue';font-size:2.8rem;letter-spacing:0.1em;color:#fff;filter:drop-shadow(0 0 18px rgba(0,136,255,0.8));}
+#end-msg{font-size:0.95rem;color:rgba(200,220,255,0.65);margin:8px 0 16px;}
+#end-scores{font-family:'Share Tech Mono';font-size:0.95rem;color:rgba(200,220,255,0.55);margin-bottom:20px;}
+.endbtn{font-family:'Bebas Neue';letter-spacing:0.15em;font-size:1.2rem;padding:10px 32px;border-radius:7px;border:none;cursor:pointer;background:linear-gradient(135deg,#0066cc,#0099ff);color:white;}
+@keyframes steal-pulse{from{transform:scale(1);}to{transform:scale(1.06);}}
+
+/* DEBUG */
+#dbg{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.9);color:#0f0;font-family:monospace;font-size:11px;padding:3px 8px;z-index:9999;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -135,124 +133,128 @@ header h1{font-family:'Bebas Neue';font-size:clamp(2rem,5vw,3.5rem);letter-spaci
 <body>
 <div id="app">
 
-<!-- LOBBY: STEP 1 — Room Code -->
-<div id="lobby-code">
-  <div id="lobby">
-    <h1>BATTLE GRID</h1>
-    <div class="subtitle">What you know is only half the battle</div>
-    <div id="firebase-error"></div>
-    <div id="lobby-status">Enter a room code to join, or create a new game</div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:320px;">
-      <input id="room-input" type="text" maxlength="4" placeholder="ENTER 4-DIGIT CODE"
-        style="font-family:'Share Tech Mono';font-size:1.8rem;letter-spacing:0.4em;text-align:center;width:100%;padding:14px;border-radius:8px;border:1px solid rgba(0,180,255,0.4);background:rgba(0,180,255,0.05);color:#eef;text-transform:uppercase;outline:none;"
-        oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)"
-        onkeydown="if(event.key==='Enter') joinRoom()"
-      />
-      <button class="role-btn blue" style="width:100%;font-size:1.1rem;padding:14px;" onclick="joinRoom()">JOIN ROOM</button>
-      <div style="font-family:'Share Tech Mono';font-size:0.75rem;color:rgba(200,220,255,0.3);">— OR —</div>
-      <button class="role-btn red" style="width:100%;font-size:1.1rem;padding:14px;" onclick="createRoom()">CREATE NEW GAME</button>
-    </div>
-    <button class="lobby-reset-btn" onclick="resetGame()">⟳ Reset / Leave Room</button>
+<!-- SCREEN 1: HOME -->
+<div id="s-home" class="screen active">
+  <div class="bg-title">BATTLE GRID</div>
+  <div class="subtitle">What you know is only half the battle</div>
+  <div id="home-error" class="error-line"></div>
+  <div id="home-status" class="status-line">Loading...</div>
+  <div class="btn-row">
+    <button class="action-btn" onclick="goCreate()">➕ Create Game</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#220033,#660099);" onclick="goJoin()">🔑 Join Game</button>
   </div>
 </div>
 
-<!-- LOBBY: STEP 2 — Choose Side -->
-<div id="lobby-side" style="display:none;flex-direction:column;align-items:center;justify-content:center;min-height:90vh;gap:24px;">
-  <h1 style="font-family:'Bebas Neue';font-size:clamp(3rem,10vw,6rem);letter-spacing:0.1em;background:linear-gradient(180deg,#fff 0%,#88ccff 50%,#0088ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">BATTLE GRID</h1>
-  <div id="room-code-display" style="font-family:'Share Tech Mono';font-size:1rem;color:rgba(200,220,255,0.5);letter-spacing:0.3em;"></div>
-  <div id="lobby-side-status" style="font-family:'Share Tech Mono';font-size:0.85rem;color:rgba(200,220,255,0.5);text-align:center;max-width:400px;min-height:2em;"></div>
-  <div class="lobby-btns">
-    <button class="role-btn red" id="btn-join-red" onclick="joinAs('red')">🔴 PLAY AS P1</button>
-    <button class="role-btn blue" id="btn-join-blue" onclick="joinAs('blue')">🔵 PLAY AS P2</button>
+<!-- SCREEN 2: CREATE (shows generated code, waits) -->
+<div id="s-create" class="screen">
+  <div class="bg-title">BATTLE GRID</div>
+  <div class="status-line">Share this code with your opponent</div>
+  <div id="create-code" class="big-code"></div>
+  <div id="create-status" class="status-line">Waiting for opponent to join...</div>
+  <div class="btn-row">
+    <button class="role-btn red" id="create-red" onclick="pickRole('red')">🔴 Play as P1</button>
+    <button class="role-btn blue" id="create-blue" onclick="pickRole('blue')">🔵 Play as P2</button>
   </div>
-  <button class="lobby-reset-btn" onclick="leaveRoom()">← Back</button>
+  <button class="plain-btn" onclick="goHome()">← Back</button>
 </div>
 
-<!-- GAME -->
-<div id="game">
+<!-- SCREEN 3: JOIN (enter code) -->
+<div id="s-join" class="screen">
+  <div class="bg-title">BATTLE GRID</div>
+  <div class="status-line">Enter the 4-digit room code</div>
+  <input id="join-input" class="code-input" type="text" maxlength="4" placeholder="0000"
+    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)"
+    onkeydown="if(event.key==='Enter')doJoin()">
+  <div id="join-error" class="error-line"></div>
+  <button class="action-btn" onclick="doJoin()">Join Room</button>
+  <button class="plain-btn" onclick="goHome()">← Back</button>
+</div>
+
+<!-- SCREEN 4: PICK ROLE (after joining) -->
+<div id="s-role" class="screen">
+  <div class="bg-title">BATTLE GRID</div>
+  <div style="font-family:'Share Tech Mono';font-size:0.85rem;color:rgba(200,220,255,0.4);letter-spacing:0.2em;" id="role-room-code"></div>
+  <div id="role-status" class="status-line">Choose your side</div>
+  <div class="btn-row">
+    <button class="role-btn red" id="role-red" onclick="pickRole('red')">🔴 Play as P1</button>
+    <button class="role-btn blue" id="role-blue" onclick="pickRole('blue')">🔵 Play as P2</button>
+  </div>
+  <button class="plain-btn" onclick="goHome()">← Back</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen">
   <header><h1>BATTLE GRID</h1></header>
-  <div id="my-role-badge"></div>
+  <div id="role-badge"></div>
   <div id="scorebar">
     <div class="player-panel red" id="panel-red">
-      <div>
-        <div class="pname">🔴 Player 1</div>
-        <div class="tile-count" id="red-tile-count">0 tiles</div>
-      </div>
-      <div>
-        <div class="score" id="red-score">0</div>
-        <div style="font-family:'Share Tech Mono';font-size:0.6rem;color:rgba(255,100,120,0.6);text-align:right">SETS</div>
-      </div>
+      <div><div class="pname">🔴 P1</div><div class="ptiles" id="red-tiles">0 tiles</div></div>
+      <div><div class="pscore" id="red-score">0</div><div style="font-family:'Share Tech Mono';font-size:0.55rem;color:rgba(255,100,120,0.5)">SETS</div></div>
     </div>
-    <div class="vs-badge">VS</div>
+    <div class="vs">VS</div>
     <div class="player-panel blue" id="panel-blue">
-      <div>
-        <div class="score" id="blue-score">0</div>
-        <div style="font-family:'Share Tech Mono';font-size:0.6rem;color:rgba(100,180,255,0.6)">SETS</div>
-      </div>
-      <div>
-        <div class="pname">Player 2 🔵</div>
-        <div class="tile-count" id="blue-tile-count">0 tiles</div>
-      </div>
+      <div><div class="pscore" id="blue-score">0</div><div style="font-family:'Share Tech Mono';font-size:0.55rem;color:rgba(100,180,255,0.5)">SETS</div></div>
+      <div><div class="pname">P2 🔵</div><div class="ptiles" id="blue-tiles">0 tiles</div></div>
     </div>
   </div>
   <div id="cat-bar"></div>
   <div id="arena">
     <div class="side-panel">
-      <div class="panel-box"><h3>🔴 P1 Hand</h3><div class="hand-tiles" id="red-hand"></div></div>
-      <div class="panel-box"><h3>🔴 P1 Board</h3><div class="cat-progress" id="red-cats"></div></div>
+      <div class="pbox"><h3>🔴 P1 Hand</h3><div class="hand-tiles" id="red-hand"></div></div>
+      <div class="pbox"><h3>🔴 P1 Sets</h3><div class="catprog" id="red-cats"></div></div>
     </div>
     <div>
-      <div id="grid-wrapper"><div id="grid"></div></div>
-      <div id="question-area">
-        <div id="turn-indicator" class="neutral">CONNECTING...</div>
-        <div id="question-text">Waiting for game to start...</div>
+      <div id="grid-wrap"><div id="grid"></div></div>
+      <div id="qarea">
+        <div id="turn-ind" class="neutral">—</div>
+        <div id="qtext">—</div>
         <div id="answers"></div>
-        <div id="game-controls">
-          <button class="ctrl-btn" id="btn-steal" onclick="activateSteal()">⚡ STEAL</button>
-          <button class="ctrl-btn" id="btn-next"  onclick="nextQuestion()">▶ NEXT Q</button>
-          <button class="ctrl-btn" id="btn-place" onclick="enterPlaceMode()">📍 PLACE</button>
-          <button class="ctrl-btn" id="btn-skip"  onclick="skipTurn()">SKIP</button>
+        <div id="controls">
+          <button class="cbtn" id="btn-steal" onclick="activateSteal()">⚡ STEAL</button>
+          <button class="cbtn" id="btn-next"  onclick="nextQuestion()">▶ NEXT Q</button>
+          <button class="cbtn" id="btn-place" onclick="enterPlaceMode()">📍 PLACE</button>
+          <button class="cbtn" id="btn-skip"  onclick="skipTurn()">SKIP</button>
         </div>
-        <div id="new-cat-banner"></div>
+        <div id="new-cat"></div>
       </div>
-      <div id="status"></div>
-      <div id="steal-mode-bar">⚡ STEAL — Click where you think the tile is hidden!</div>
+      <div id="statusbar"></div>
+      <div id="steal-bar">⚡ STEAL MODE — click where you think the tile is hidden!</div>
     </div>
     <div class="side-panel">
-      <div class="panel-box"><h3>P2 Hand 🔵</h3><div class="hand-tiles" id="blue-hand"></div></div>
-      <div class="panel-box"><h3>P2 Board 🔵</h3><div class="cat-progress" id="blue-cats"></div></div>
+      <div class="pbox"><h3>P2 Hand 🔵</h3><div class="hand-tiles" id="blue-hand"></div></div>
+      <div class="pbox"><h3>P2 Sets 🔵</h3><div class="catprog" id="blue-cats"></div></div>
     </div>
   </div>
 </div>
 
-<!-- WAITING -->
-<div id="waiting-overlay">
+<!-- WAITING OVERLAY -->
+<div id="waiting">
   <div class="spinner"></div>
-  <p id="waiting-msg">WAITING FOR OPPONENT</p>
-  <div id="waiting-code" style="font-family:'Bebas Neue';font-size:3rem;letter-spacing:0.4em;color:var(--gold);text-shadow:0 0 20px rgba(255,204,0,0.5);margin:4px 0;"></div>
-  <small>Share this room code with your opponent</small>
+  <p>WAITING FOR OPPONENT</p>
+  <div class="wcode" id="wait-code"></div>
+  <small>Share this code with your opponent</small>
+  <button class="plain-btn" onclick="goHome()" style="margin-top:8px;">Leave</button>
 </div>
 
-<!-- END -->
-<div id="end-overlay">
-  <div class="end-box">
+<!-- END OVERLAY -->
+<div id="end">
+  <div class="endbox">
     <div id="end-title">GAME OVER</div>
     <div id="end-msg"></div>
     <div id="end-scores"></div>
-    <button class="end-btn" onclick="resetGame()">PLAY AGAIN</button>
+    <button class="endbtn" onclick="goHome()">PLAY AGAIN</button>
   </div>
 </div>
 
-</div>
+<div id="dbg">starting...</div>
+</div><!-- #app -->
 
-<!-- Firebase SDK -->
 <script>
-// ================================================================
-// FIREBASE CONFIG — paste your values here from:
-// console.firebase.google.com → Project Settings → Your apps → SDK setup
-// ================================================================
+// ============================================================
+// CONFIG — replace YOUR_* values with your Firebase config
+// ============================================================
 const FIREBASE_CONFIG = {
-   apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
+  apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
   authDomain: "battle-grid-7fa4f.firebaseapp.com",
   databaseURL: "https://battle-grid-7fa4f-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "battle-grid-7fa4f",
@@ -261,938 +263,835 @@ const FIREBASE_CONFIG = {
   appId: "1:775436519324:web:34a3f1aa6b29882c9baa59",
   measurementId: "G-8Q88LCZ2W1"
 };
-// ================================================================
+// ============================================================
 
-// ================================================================
-// DATA
-// ================================================================
-const ALL_CATEGORIES = {
-  celebrities:{label:'Celebrities',color:'rgba(255,60,180,0.35)',border:'#ff3cb4',
+// ============================================================
+// GAME DATA
+// ============================================================
+const ALL_CATS = {
+  celebrities:{label:'Celebrities',color:'rgba(255,60,180,0.3)',border:'#ff3cb4',
     tiles:[{id:'cel1',e:'🎬',l:'Tom Hanks'},{id:'cel2',e:'✈️',l:'Tom Cruise'},{id:'cel3',e:'🐍',l:'Tom Hiddleston'},{id:'cel4',e:'💪',l:'Tom Hardy'}]},
-  flags:{label:'National Flags',color:'rgba(60,220,80,0.35)',border:'#3cdc50',
+  flags:{label:'National Flags',color:'rgba(60,220,80,0.3)',border:'#3cdc50',
     tiles:[{id:'flg1',e:'🇧🇷',l:'Brazil'},{id:'flg2',e:'🇦🇷',l:'Argentina'},{id:'flg3',e:'🇨🇴',l:'Colombia'},{id:'flg4',e:'🇨🇱',l:'Chile'}]},
-  cities:{label:'World Cities',color:'rgba(0,220,255,0.35)',border:'#00dcff',
+  cities:{label:'World Cities',color:'rgba(0,220,255,0.3)',border:'#00dcff',
     tiles:[{id:'cit1',e:'🗼',l:'Paris'},{id:'cit2',e:'🎡',l:'London'},{id:'cit3',e:'🏛️',l:'Rome'},{id:'cit4',e:'🌭',l:'Berlin'}]},
-  science:{label:'Science',color:'rgba(255,180,0,0.35)',border:'#ffb400',
+  science:{label:'Science',color:'rgba(255,180,0,0.3)',border:'#ffb400',
     tiles:[{id:'sci1',e:'⚛️',l:'Einstein'},{id:'sci2',e:'🍎',l:'Newton'},{id:'sci3',e:'⚡',l:'Tesla'},{id:'sci4',e:'🧬',l:'Darwin'}]},
-  nature:{label:'Nature',color:'rgba(0,200,140,0.35)',border:'#00c88c',
+  nature:{label:'Nature',color:'rgba(0,200,140,0.3)',border:'#00c88c',
     tiles:[{id:'nat1',e:'🦁',l:'Lion'},{id:'nat2',e:'🐘',l:'Elephant'},{id:'nat3',e:'🦒',l:'Giraffe'},{id:'nat4',e:'🦓',l:'Zebra'}]},
 };
-const CAT_KEYS = ['celebrities','flags','cities','science','nature'];
-const CAT_OPTIONS = {
+const CAT_KEYS=['celebrities','flags','cities','science','nature'];
+const CAT_OPTS={
   celebrities:['Tom Hanks','Tom Cruise','Tom Hiddleston','Tom Hardy'],
   flags:['Brazil','Argentina','Colombia','Chile'],
   cities:['Paris','London','Rome','Berlin'],
   science:['Einstein','Newton','Tesla','Darwin'],
   nature:['Lion','Elephant','Giraffe','Zebra'],
 };
-const QUESTIONS = [
-  {q:"Which Tom won the Oscar for Best Actor for Philadelphia (1994)?",cat:'celebrities',answer:'Tom Hanks'},
-  {q:"Which Tom played Forrest Gump in the 1994 classic?",cat:'celebrities',answer:'Tom Hanks'},
-  {q:"Which Tom starred in Cast Away, famously talking to a volleyball?",cat:'celebrities',answer:'Tom Hanks'},
-  {q:"Which Tom voiced Woody in the Toy Story franchise?",cat:'celebrities',answer:'Tom Hanks'},
-  {q:"Which Tom starred as Captain Miller in Saving Private Ryan?",cat:'celebrities',answer:'Tom Hanks'},
-  {q:"Which Tom performed his own stunts in the Mission Impossible series?",cat:'celebrities',answer:'Tom Cruise'},
-  {q:"Which Tom starred in Top Gun as Maverick?",cat:'celebrities',answer:'Tom Cruise'},
-  {q:"Which Tom played the villain in Collateral alongside Jamie Foxx?",cat:'celebrities',answer:'Tom Cruise'},
-  {q:"Which Tom starred in Jerry Maguire, demanding to show him the money?",cat:'celebrities',answer:'Tom Cruise'},
-  {q:"Which Tom starred in A Few Good Men?",cat:'celebrities',answer:'Tom Cruise'},
-  {q:"Which Tom played Loki in the Marvel Cinematic Universe?",cat:'celebrities',answer:'Tom Hiddleston'},
-  {q:"Which Tom played the villain in Thor opposite Chris Hemsworth?",cat:'celebrities',answer:'Tom Hiddleston'},
-  {q:"Which Tom appeared as Jonathan Pine in The Night Manager?",cat:'celebrities',answer:'Tom Hiddleston'},
-  {q:"Which Tom played Bane in The Dark Knight Rises?",cat:'celebrities',answer:'Tom Hardy'},
-  {q:"Which Tom starred as Max Rockatansky in Mad Max Fury Road?",cat:'celebrities',answer:'Tom Hardy'},
-  {q:"Which Tom played Eddie Brock / Venom in Sony's Venom?",cat:'celebrities',answer:'Tom Hardy'},
-  {q:"Which Tom played Alfie Solomons in Peaky Blinders?",cat:'celebrities',answer:'Tom Hardy'},
-  {q:"Which South American country's flag features a yellow diamond on green?",cat:'flags',answer:'Brazil'},
-  {q:"Which country hosted the 2016 Summer Olympics in Rio de Janeiro?",cat:'flags',answer:'Brazil'},
-  {q:"Which South American nation is the largest by area?",cat:'flags',answer:'Brazil'},
-  {q:"Portuguese is the official language of which South American country?",cat:'flags',answer:'Brazil'},
-  {q:"Which country has a light blue and white flag with a sun in the centre?",cat:'flags',answer:'Argentina'},
-  {q:"Lionel Messi plays for which national football team?",cat:'flags',answer:'Argentina'},
-  {q:"Which country won the 2022 FIFA World Cup?",cat:'flags',answer:'Argentina'},
-  {q:"Buenos Aires is the capital of which South American country?",cat:'flags',answer:'Argentina'},
-  {q:"Bogota is the capital of which South American country?",cat:'flags',answer:'Colombia'},
-  {q:"Which country is the world's largest producer of emeralds?",cat:'flags',answer:'Colombia'},
-  {q:"Santiago is the capital of which long narrow South American country?",cat:'flags',answer:'Chile'},
-  {q:"The Atacama Desert is in which South American country?",cat:'flags',answer:'Chile'},
-  {q:"Which city is home to the Louvre museum and Notre-Dame cathedral?",cat:'cities',answer:'Paris'},
-  {q:"The Seine river flows through which European capital?",cat:'cities',answer:'Paris'},
-  {q:"In which city would you find the Eiffel Tower and Arc de Triomphe?",cat:'cities',answer:'Paris'},
-  {q:"Which city is home to Big Ben, Buckingham Palace, and the Tube?",cat:'cities',answer:'London'},
-  {q:"The Thames River runs through which European capital?",cat:'cities',answer:'London'},
-  {q:"Which city hosted the 2012 Summer Olympics?",cat:'cities',answer:'London'},
-  {q:"Which city is home to the Colosseum and the Vatican City?",cat:'cities',answer:'Rome'},
-  {q:"The Trevi Fountain is in which city?",cat:'cities',answer:'Rome'},
-  {q:"Which city was the centre of the ancient Roman Empire?",cat:'cities',answer:'Rome'},
-  {q:"The Brandenburg Gate is an iconic landmark of which city?",cat:'cities',answer:'Berlin'},
-  {q:"Which city was divided by a famous wall until 1989?",cat:'cities',answer:'Berlin'},
-  {q:"Who developed the Special and General Theories of Relativity?",cat:'science',answer:'Einstein'},
-  {q:"Which scientist is famous for the equation E equals mc squared?",cat:'science',answer:'Einstein'},
-  {q:"Who won the Nobel Prize in Physics in 1921 for the photoelectric effect?",cat:'science',answer:'Einstein'},
-  {q:"Who formulated the Law of Universal Gravitation?",cat:'science',answer:'Newton'},
-  {q:"Which scientist invented calculus alongside Leibniz?",cat:'science',answer:'Newton'},
-  {q:"Who described the three laws of motion that bear his name?",cat:'science',answer:'Newton'},
-  {q:"Who invented the AC electrical system and the Tesla coil?",cat:'science',answer:'Tesla'},
-  {q:"Which scientist had a rivalry with Thomas Edison over AC vs DC power?",cat:'science',answer:'Tesla'},
-  {q:"Who wrote On the Origin of Species in 1859?",cat:'science',answer:'Darwin'},
-  {q:"Which scientist proposed the theory of evolution by natural selection?",cat:'science',answer:'Darwin'},
-  {q:"Who sailed on the HMS Beagle to study the Galapagos Islands?",cat:'science',answer:'Darwin'},
-  {q:"Which animal is the largest land predator in Africa and lives in prides?",cat:'nature',answer:'Lion'},
-  {q:"Which animal is nicknamed the King of the Jungle?",cat:'nature',answer:'Lion'},
-  {q:"Which African animal produces the loudest roar audible 8km away?",cat:'nature',answer:'Lion'},
-  {q:"Which land animal has the largest brain of any animal on Earth?",cat:'nature',answer:'Elephant'},
-  {q:"Which animal is the largest land mammal on Earth?",cat:'nature',answer:'Elephant'},
-  {q:"Which animal is famous for its exceptional memory?",cat:'nature',answer:'Elephant'},
-  {q:"Which animal is the tallest living terrestrial animal on Earth?",cat:'nature',answer:'Giraffe'},
-  {q:"Which African mammal has the longest neck of any animal?",cat:'nature',answer:'Giraffe'},
-  {q:"Which animal has the same number of neck bones as a human?",cat:'nature',answer:'Giraffe'},
-  {q:"Which African animal has a unique black-and-white striped coat?",cat:'nature',answer:'Zebra'},
-  {q:"Which animal's stripes are as unique as a human fingerprint?",cat:'nature',answer:'Zebra'},
-  {q:"Which African animal migrates alongside wildebeest in the Serengeti?",cat:'nature',answer:'Zebra'},
+const QUESTIONS=[
+  {q:"Which Tom won the Oscar for Best Actor for Philadelphia (1994)?",cat:'celebrities',a:'Tom Hanks'},
+  {q:"Which Tom played Forrest Gump in the 1994 classic?",cat:'celebrities',a:'Tom Hanks'},
+  {q:"Which Tom starred in Cast Away, famously talking to a volleyball?",cat:'celebrities',a:'Tom Hanks'},
+  {q:"Which Tom voiced Woody in the Toy Story franchise?",cat:'celebrities',a:'Tom Hanks'},
+  {q:"Which Tom starred as Captain Miller in Saving Private Ryan?",cat:'celebrities',a:'Tom Hanks'},
+  {q:"Which Tom performed his own stunts in the Mission Impossible series?",cat:'celebrities',a:'Tom Cruise'},
+  {q:"Which Tom starred in Top Gun as Maverick?",cat:'celebrities',a:'Tom Cruise'},
+  {q:"Which Tom played the villain in Collateral alongside Jamie Foxx?",cat:'celebrities',a:'Tom Cruise'},
+  {q:"Which Tom starred in Jerry Maguire, demanding to show him the money?",cat:'celebrities',a:'Tom Cruise'},
+  {q:"Which Tom starred in A Few Good Men?",cat:'celebrities',a:'Tom Cruise'},
+  {q:"Which Tom played Loki in the Marvel Cinematic Universe?",cat:'celebrities',a:'Tom Hiddleston'},
+  {q:"Which Tom played the villain in Thor opposite Chris Hemsworth?",cat:'celebrities',a:'Tom Hiddleston'},
+  {q:"Which Tom appeared as Jonathan Pine in The Night Manager?",cat:'celebrities',a:'Tom Hiddleston'},
+  {q:"Which Tom played Bane in The Dark Knight Rises?",cat:'celebrities',a:'Tom Hardy'},
+  {q:"Which Tom starred as Max Rockatansky in Mad Max Fury Road?",cat:'celebrities',a:'Tom Hardy'},
+  {q:"Which Tom played Eddie Brock / Venom in Sony's Venom?",cat:'celebrities',a:'Tom Hardy'},
+  {q:"Which Tom played Alfie Solomons in Peaky Blinders?",cat:'celebrities',a:'Tom Hardy'},
+  {q:"Which South American country's flag features a yellow diamond on green?",cat:'flags',a:'Brazil'},
+  {q:"Which country hosted the 2016 Summer Olympics in Rio de Janeiro?",cat:'flags',a:'Brazil'},
+  {q:"Which South American nation is the largest by area?",cat:'flags',a:'Brazil'},
+  {q:"Portuguese is the official language of which South American country?",cat:'flags',a:'Brazil'},
+  {q:"Which country has a light blue and white flag with a sun in the centre?",cat:'flags',a:'Argentina'},
+  {q:"Lionel Messi plays for which national football team?",cat:'flags',a:'Argentina'},
+  {q:"Which country won the 2022 FIFA World Cup?",cat:'flags',a:'Argentina'},
+  {q:"Buenos Aires is the capital of which South American country?",cat:'flags',a:'Argentina'},
+  {q:"Bogota is the capital of which South American country?",cat:'flags',a:'Colombia'},
+  {q:"Which country is the world's largest producer of emeralds?",cat:'flags',a:'Colombia'},
+  {q:"Santiago is the capital of which long narrow South American country?",cat:'flags',a:'Chile'},
+  {q:"The Atacama Desert is in which South American country?",cat:'flags',a:'Chile'},
+  {q:"Which city is home to the Louvre museum and Notre-Dame cathedral?",cat:'cities',a:'Paris'},
+  {q:"The Seine river flows through which European capital?",cat:'cities',a:'Paris'},
+  {q:"In which city would you find the Eiffel Tower and Arc de Triomphe?",cat:'cities',a:'Paris'},
+  {q:"Which city is home to Big Ben, Buckingham Palace, and the Tube?",cat:'cities',a:'London'},
+  {q:"The Thames River runs through which European capital?",cat:'cities',a:'London'},
+  {q:"Which city hosted the 2012 Summer Olympics?",cat:'cities',a:'London'},
+  {q:"Which city is home to the Colosseum and the Vatican City?",cat:'cities',a:'Rome'},
+  {q:"The Trevi Fountain is in which city?",cat:'cities',a:'Rome'},
+  {q:"Which city was the centre of the ancient Roman Empire?",cat:'cities',a:'Rome'},
+  {q:"The Brandenburg Gate is an iconic landmark of which city?",cat:'cities',a:'Berlin'},
+  {q:"Which city was divided by a famous wall until 1989?",cat:'cities',a:'Berlin'},
+  {q:"Who developed the Special and General Theories of Relativity?",cat:'science',a:'Einstein'},
+  {q:"Which scientist is famous for the equation E equals mc squared?",cat:'science',a:'Einstein'},
+  {q:"Who won the Nobel Prize in Physics in 1921 for the photoelectric effect?",cat:'science',a:'Einstein'},
+  {q:"Who formulated the Law of Universal Gravitation?",cat:'science',a:'Newton'},
+  {q:"Which scientist invented calculus alongside Leibniz?",cat:'science',a:'Newton'},
+  {q:"Who described the three laws of motion that bear his name?",cat:'science',a:'Newton'},
+  {q:"Who invented the AC electrical system and the Tesla coil?",cat:'science',a:'Tesla'},
+  {q:"Which scientist had a rivalry with Thomas Edison over AC vs DC power?",cat:'science',a:'Tesla'},
+  {q:"Who wrote On the Origin of Species in 1859?",cat:'science',a:'Darwin'},
+  {q:"Which scientist proposed the theory of evolution by natural selection?",cat:'science',a:'Darwin'},
+  {q:"Who sailed on the HMS Beagle to study the Galapagos Islands?",cat:'science',a:'Darwin'},
+  {q:"Which animal is the largest land predator in Africa and lives in prides?",cat:'nature',a:'Lion'},
+  {q:"Which animal is nicknamed the King of the Jungle?",cat:'nature',a:'Lion'},
+  {q:"Which African animal produces the loudest roar audible 8km away?",cat:'nature',a:'Lion'},
+  {q:"Which land animal has the largest brain of any animal on Earth?",cat:'nature',a:'Elephant'},
+  {q:"Which animal is the largest land mammal on Earth?",cat:'nature',a:'Elephant'},
+  {q:"Which animal is famous for its exceptional memory?",cat:'nature',a:'Elephant'},
+  {q:"Which animal is the tallest living terrestrial animal on Earth?",cat:'nature',a:'Giraffe'},
+  {q:"Which African mammal has the longest neck of any animal?",cat:'nature',a:'Giraffe'},
+  {q:"Which animal has the same number of neck bones as a human?",cat:'nature',a:'Giraffe'},
+  {q:"Which African animal has a unique black-and-white striped coat?",cat:'nature',a:'Zebra'},
+  {q:"Which animal's stripes are as unique as a human fingerprint?",cat:'nature',a:'Zebra'},
+  {q:"Which African animal migrates alongside wildebeest in the Serengeti?",cat:'nature',a:'Zebra'},
 ];
 
-// ================================================================
-// GRID / SHAPE DETECTION
-// ================================================================
-const GRID_COLS=4, GRID_SIZE=16;
-const VALID_SHAPES=(()=>{
-  const raw=[
-    [[0,0],[0,1],[0,2],[0,3]],[[0,0],[1,0],[2,0],[3,0]],
-    [[0,0],[0,1],[1,0],[1,1]],
-    [[0,0],[0,1],[0,2],[1,1]],[[0,1],[1,0],[1,1],[1,2]],
-    [[0,0],[1,0],[1,1],[2,0]],[[0,1],[1,0],[1,1],[2,1]],
-    [[0,0],[1,0],[2,0],[2,1]],[[0,0],[0,1],[0,2],[1,0]],
-    [[0,0],[0,1],[1,1],[2,1]],[[0,2],[1,0],[1,1],[1,2]],
-    [[0,0],[0,1],[1,0],[2,0]],[[0,0],[1,0],[1,1],[1,2]],
-    [[0,1],[1,1],[2,0],[2,1]],[[0,0],[0,1],[0,2],[1,2]],
-  ];
-  const keys=new Set();
-  for(const s of raw){
-    const mr=Math.min(...s.map(c=>c[0])),mc=Math.min(...s.map(c=>c[1]));
-    const n=s.map(c=>({r:c[0]-mr,c:c[1]-mc})).sort((a,b)=>a.r!==b.r?a.r-b.r:a.c-b.c);
-    keys.add(n.map(c=>`${c.r},${c.c}`).join('|'));
-  }
-  return keys;
+// ============================================================
+// GRID SHAPE DETECTION
+// ============================================================
+const GS=16,GC=4;
+const SHAPES=(()=>{
+  const raw=[[[0,0],[0,1],[0,2],[0,3]],[[0,0],[1,0],[2,0],[3,0]],[[0,0],[0,1],[1,0],[1,1]],
+    [[0,0],[0,1],[0,2],[1,1]],[[0,1],[1,0],[1,1],[1,2]],[[0,0],[1,0],[1,1],[2,0]],[[0,1],[1,0],[1,1],[2,1]],
+    [[0,0],[1,0],[2,0],[2,1]],[[0,0],[0,1],[0,2],[1,0]],[[0,0],[0,1],[1,1],[2,1]],[[0,2],[1,0],[1,1],[1,2]],
+    [[0,0],[0,1],[1,0],[2,0]],[[0,0],[1,0],[1,1],[1,2]],[[0,1],[1,1],[2,0],[2,1]],[[0,0],[0,1],[0,2],[1,2]]];
+  const k=new Set();
+  for(const s of raw){const mr=Math.min(...s.map(c=>c[0])),mc=Math.min(...s.map(c=>c[1]));
+    k.add(s.map(c=>({r:c[0]-mr,c:c[1]-mc})).sort((a,b)=>a.r-b.r||a.c-b.c).map(c=>`${c.r},${c.c}`).join('|'));}
+  return k;
 })();
 function shapeKey(cells){
-  const cs=cells.map(i=>({r:Math.floor(i/GRID_COLS),c:i%GRID_COLS}));
+  const cs=cells.map(i=>({r:Math.floor(i/GC),c:i%GC}));
   const mr=Math.min(...cs.map(c=>c.r)),mc=Math.min(...cs.map(c=>c.c));
-  return cs.map(c=>({r:c.r-mr,c:c.c-mc})).sort((a,b)=>a.r!==b.r?a.r-b.r:a.c-b.c).map(c=>`${c.r},${c.c}`).join('|');
+  return cs.map(c=>({r:c.r-mr,c:c.c-mc})).sort((a,b)=>a.r-b.r||a.c-b.c).map(c=>`${c.r},${c.c}`).join('|');
 }
-function isValidShape(cells){ return VALID_SHAPES.has(shapeKey(cells)); }
-function combos4(arr){
-  const res=[];
-  for(let a=0;a<arr.length-3;a++) for(let b=a+1;b<arr.length-2;b++)
-    for(let c=b+1;c<arr.length-1;c++) for(let d=c+1;d<arr.length;d++)
-      res.push([arr[a],arr[b],arr[c],arr[d]]);
-  return res;
-}
-function boardHasRoomForSet(grid){
-  const empty=[];
-  for(let i=0;i<GRID_SIZE;i++) if(!grid[i]) empty.push(i);
-  if(empty.length<4) return false;
-  for(const c of combos4(empty)) if(isValidShape(c)) return true;
-  return false;
-}
-function boardHasRoomWithSteal(grid){
-  const usable=[];
-  for(let i=0;i<GRID_SIZE;i++) if(!grid[i]||!grid[i].locked) usable.push(i);
-  if(usable.length<4) return false;
-  for(const c of combos4(usable)) if(isValidShape(c)) return true;
-  return false;
-}
+function validShape(cells){return SHAPES.has(shapeKey(cells));}
+function combos4(a){const r=[];for(let i=0;i<a.length-3;i++)for(let j=i+1;j<a.length-2;j++)for(let k=j+1;k<a.length-1;k++)for(let l=k+1;l<a.length;l++)r.push([a[i],a[j],a[k],a[l]]);return r;}
+function roomForSet(grid){const e=[];for(let i=0;i<GS;i++)if(!grid[i]||grid[i]===0)e.push(i);if(e.length<4)return false;for(const c of combos4(e))if(validShape(c))return true;return false;}
+function roomWithSteal(grid){const u=[];for(let i=0;i<GS;i++)if(!grid[i]||grid[i]===0||!grid[i].locked)u.push(i);if(u.length<4)return false;for(const c of combos4(u))if(validShape(c))return true;return false;}
 
-// ================================================================
+// ============================================================
 // HELPERS
-// ================================================================
-function getTile(id){ for(const cat of Object.values(ALL_CATEGORIES)){const t=cat.tiles.find(t=>t.id===id);if(t)return t;} return null; }
-function getTileCat(id){ for(const[k,cat]of Object.entries(ALL_CATEGORIES)){if(cat.tiles.find(t=>t.id===id))return k;} return null; }
-function tileByLabel(cat,label){ return ALL_CATEGORIES[cat]&&ALL_CATEGORIES[cat].tiles.find(t=>t.l===label); }
-function opp(role){ return role==='red'?'blue':'red'; }
+// ============================================================
+function getTile(id){for(const cat of Object.values(ALL_CATS)){const t=cat.tiles.find(t=>t.id===id);if(t)return t;}return null;}
+function getTileCat(id){for(const[k,cat]of Object.entries(ALL_CATS)){if(cat.tiles.find(t=>t.id===id))return k;}return null;}
+function tileByLabel(cat,label){return ALL_CATS[cat]&&ALL_CATS[cat].tiles.find(t=>t.l===label);}
+function opp(r){return r==='red'?'blue':'red';}
+function dbg(msg){document.getElementById('dbg').textContent=new Date().toLocaleTimeString()+' '+msg;console.log('[BG]',msg);}
 
-function buildQuestion(tmpl){
-  const pool=CAT_OPTIONS[tmpl.cat];
-  const others=pool.filter(o=>o!==tmpl.answer).sort(()=>Math.random()-0.5).slice(0,3);
-  const options=[tmpl.answer,...others].sort(()=>Math.random()-0.5);
-  const tile=tileByLabel(tmpl.cat,tmpl.answer);
-  return {q:tmpl.q,options,a:options.indexOf(tmpl.answer),tile:tile.id,cat:tmpl.cat};
+// ============================================================
+// FIREBASE
+// ============================================================
+let db=null;
+function initFirebase(){
+  if(FIREBASE_CONFIG.apiKey==='YOUR_API_KEY'){
+    showHomeError('⚠️ Firebase config not set. Add your values to the FIREBASE_CONFIG block.');
+    document.getElementById('home-status').textContent='';
+    return;
+  }
+  try{
+    firebase.initializeApp(FIREBASE_CONFIG);
+    db=firebase.database();
+    document.getElementById('home-status').textContent='Ready — create or join a game';
+    dbg('Firebase OK');
+  }catch(e){
+    showHomeError('Firebase error: '+e.message);
+    dbg('Firebase FAILED: '+e.message);
+  }
+}
+function showHomeError(msg){const el=document.getElementById('home-error');el.textContent=msg;el.style.display='block';}
+function rref(code){return db.ref('battlegrid/'+code);}
+
+// ============================================================
+// STATE
+// ============================================================
+let myRole=null;       // 'red' | 'blue'
+let roomCode=null;
+let gameState=null;
+let roomListener=null;
+
+// Local UI state — not synced
+let lPhase='idle';     // idle | question | answered | place | steal | steal-place
+let lQ=null;           // current question object
+let lTile=null;        // selected tile id
+let lStealTile=null;   // tile id we're trying to steal
+let lStealAvail=false; // steal is mandatory this turn
+
+function makeState(code){
+  return {
+    code,
+    redJoined:false, blueJoined:false, started:false,
+    turn:'red',
+    scores:{red:0,blue:0},
+    handRed:[], handBlue:[],
+    grid:Array(GS).fill(null),
+    usedQ:[],
+    activeCats:CAT_KEYS.slice(0,2),
+    catQueue:CAT_KEYS.slice(2),
+    forced:false,
+    lastStolen:null,
+    gameOver:false,
+    msg:'Waiting for players...'
+  };
 }
 
-function eligibleQuestions(gs){
-  const myPlaced=new Set(gs.grid.filter(g=>g&&g.player===gs.turn).map(g=>g.tileId));
-  const oppIds=new Set(gs.grid.filter(g=>g&&g.player===opp(gs.turn)&&!g.locked).map(g=>g.tileId));
+// Firebase stores null for empty arrays/objects — restore them
+function fixState(s){
+  if(!s)return null;
+  if(!s.scores)s.scores={red:0,blue:0};
+  s.scores.red=s.scores.red||0;
+  s.scores.blue=s.scores.blue||0;
+  if(!s.handRed||!Array.isArray(s.handRed))s.handRed=s.handRed?Object.values(s.handRed):[];
+  if(!s.handBlue||!Array.isArray(s.handBlue))s.handBlue=s.handBlue?Object.values(s.handBlue):[];
+  if(!s.usedQ||!Array.isArray(s.usedQ))s.usedQ=s.usedQ?Object.values(s.usedQ):[];
+  if(!s.activeCats||!Array.isArray(s.activeCats))s.activeCats=s.activeCats?Object.values(s.activeCats):[];
+  if(!s.catQueue||!Array.isArray(s.catQueue))s.catQueue=s.catQueue?Object.values(s.catQueue):[];
+  if(!s.grid||!Array.isArray(s.grid)){
+    const g=Array(GS).fill(null);
+    if(s.grid)Object.keys(s.grid).forEach(i=>{g[+i]=s.grid[i]===0?null:s.grid[i];});
+    s.grid=g;
+  } else {
+    for(let i=0;i<GS;i++)if(s.grid[i]===0||s.grid[i]===undefined)s.grid[i]=null;
+  }
+  s.redJoined=!!s.redJoined; s.blueJoined=!!s.blueJoined; s.started=!!s.started;
+  s.forced=!!s.forced; s.gameOver=!!s.gameOver;
+  return s;
+}
+
+// Firebase can't store null in arrays — convert nulls to 0
+function prepSave(s){
+  const c=JSON.parse(JSON.stringify(s));
+  c.grid=c.grid.map(v=>v===null?0:v);
+  return c;
+}
+
+async function saveState(s){
+  if(!db||!roomCode)return;
+  try{ await rref(roomCode).set(prepSave(s)); }
+  catch(e){ dbg('SAVE ERROR: '+e.message); }
+}
+
+function startListening(){
+  if(roomListener){roomListener();roomListener=null;}
+  roomListener=rref(roomCode).on('value',snap=>{
+    const raw=snap.val();
+    dbg('FB update: '+(raw?'data room='+raw.code+' started='+raw.started:'null'));
+    if(!raw)return;
+    const s=fixState(raw);
+    gameState=s;
+    onStateUpdate(s);
+  });
+}
+
+function stopListening(){
+  if(roomListener){rref(roomCode).off('value');roomListener=null;}
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(id){
+  ['s-home','s-create','s-join','s-role','game-screen'].forEach(s=>{
+    const el=document.getElementById(s);
+    if(s==='game-screen'){el.style.display=(s===id)?'flex':'none';}
+    else{el.classList.toggle('active',s===id);}
+  });
+  document.getElementById('waiting').classList.remove('show');
+  document.getElementById('end').classList.remove('show');
+}
+
+function goHome(){
+  stopListening();
+  myRole=null; roomCode=null; gameState=null;
+  lPhase='idle'; lQ=null; lTile=null; lStealTile=null; lStealAvail=false;
+  showScreen('s-home');
+}
+
+function goCreate(){
+  if(!db){showHomeError('Firebase not connected');return;}
+  showScreen('s-create');
+}
+
+function goJoin(){
+  if(!db){showHomeError('Firebase not connected');return;}
+  showScreen('s-join');
+}
+
+// ============================================================
+// CREATE ROOM
+// ============================================================
+async function createRoom(){
+  const code=String(Math.floor(1000+Math.random()*9000));
+  roomCode=code;
+  const s=makeState(code);
+  await rref(code).set(prepSave(s));
+  gameState=s;
+  document.getElementById('create-code').textContent=code;
+  document.getElementById('wait-code').textContent=code;
+  startListening();
+  dbg('Room created: '+code);
+}
+
+// Called from Create screen (role buttons)
+async function pickRole(role){
+  if(!roomCode||!gameState)return;
+  if(role==='red'&&gameState.redJoined){alert('P1 already taken');return;}
+  if(role==='blue'&&gameState.blueJoined){alert('P2 already taken');return;}
+  myRole=role;
+  gameState[role==='red'?'redJoined':'blueJoined']=true;
+  if(gameState.redJoined&&gameState.blueJoined){
+    gameState.started=true;
+    gameState.msg='Game on! Red goes first.';
+  }
+  await saveState(gameState);
+  dbg('Picked role: '+role+' started='+gameState.started);
+  transitionToGame();
+}
+
+// ============================================================
+// JOIN ROOM
+// ============================================================
+async function doJoin(){
+  const code=document.getElementById('join-input').value.trim();
+  const errEl=document.getElementById('join-error');
+  errEl.style.display='none';
+  if(!/^\d{4}$/.test(code)){errEl.textContent='Enter a 4-digit number';errEl.style.display='block';return;}
+  let snap;
+  try{snap=await rref(code).get();}catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='block';return;}
+  if(!snap.val()){errEl.textContent='Room '+code+' not found';errEl.style.display='block';return;}
+  roomCode=code;
+  gameState=fixState(snap.val());
+  document.getElementById('role-room-code').textContent='ROOM '+code;
+  document.getElementById('role-red').disabled=!!gameState.redJoined;
+  document.getElementById('role-blue').disabled=!!gameState.blueJoined;
+  document.getElementById('role-status').textContent=
+    gameState.redJoined&&gameState.blueJoined?'Both sides taken!':
+    gameState.redJoined?'P1 taken — pick P2':
+    gameState.blueJoined?'P2 taken — pick P1':'Choose your side';
+  startListening();
+  showScreen('s-role');
+}
+
+// Called from Role screen
+async function pickRoleJoin(role){
+  if(!roomCode||!gameState)return;
+  if(role==='red'&&gameState.redJoined){alert('P1 already taken');return;}
+  if(role==='blue'&&gameState.blueJoined){alert('P2 already taken');return;}
+  myRole=role;
+  gameState[role==='red'?'redJoined':'blueJoined']=true;
+  if(gameState.redJoined&&gameState.blueJoined){
+    gameState.started=true;
+    gameState.msg='Game on! Red goes first.';
+  }
+  await saveState(gameState);
+  dbg('Join picked role: '+role+' started='+gameState.started);
+  transitionToGame();
+}
+
+// ============================================================
+// TRANSITION TO GAME
+// ============================================================
+function transitionToGame(){
+  lPhase='idle'; lQ=null; lTile=null; lStealTile=null; lStealAvail=false;
+  showScreen('game-screen');
+  if(!gameState.started){
+    document.getElementById('wait-code').textContent=roomCode;
+    document.getElementById('waiting').classList.add('show');
+  } else {
+    renderGame();
+  }
+}
+
+// ============================================================
+// STATE UPDATE FROM FIREBASE
+// ============================================================
+function onStateUpdate(s){
+  dbg('onStateUpdate myRole='+myRole+' started='+s.started+' turn='+s.turn);
+
+  // If we haven't picked a role yet, just update lobby UI
+  if(!myRole){
+    // Update role screen buttons if visible
+    const rred=document.getElementById('role-red');
+    const rblue=document.getElementById('role-blue');
+    if(rred){rred.disabled=!!s.redJoined; rblue.disabled=!!s.blueJoined;}
+    const cred=document.getElementById('create-red');
+    const cblue=document.getElementById('create-blue');
+    if(cred){cred.disabled=!!s.redJoined; cblue.disabled=!!s.blueJoined;}
+    return;
+  }
+
+  // We have a role — handle game state
+  if(s.gameOver){showEndScreen(s);return;}
+
+  if(!s.started){
+    // Other player hasn't joined yet
+    document.getElementById('wait-code').textContent=roomCode;
+    document.getElementById('waiting').classList.add('show');
+    return;
+  }
+
+  // Game is live
+  document.getElementById('waiting').classList.remove('show');
+  document.getElementById('game-screen').style.display='flex';
+
+  // If it just became our turn (turn changed to us), reset local question state
+  if(s.turn===myRole && lPhase==='idle'){
+    document.getElementById('qtext').textContent='Press NEXT Q to start your turn!';
+    document.getElementById('answers').innerHTML='';
+  }
+
+  renderGame();
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderGame(){
+  if(!gameState||!myRole)return;
+  const s=gameState;
+  const myHand=myRole==='red'?s.handRed:s.handBlue;
+  const oppHand=myRole==='red'?s.handBlue:s.handRed;
+  const isMyTurn=s.turn===myRole;
+
+  // Badge
+  document.getElementById('role-badge').textContent=myRole==='red'?'🔴 YOU ARE PLAYER 1':'🔵 YOU ARE PLAYER 2';
+  document.getElementById('role-badge').style.color=myRole==='red'?'var(--red)':'var(--blue)';
+
+  // Scores
+  document.getElementById('red-score').textContent=s.scores.red;
+  document.getElementById('blue-score').textContent=s.scores.blue;
+  document.getElementById('red-tiles').textContent=s.handRed.length+' tile'+(s.handRed.length!==1?'s':'');
+  document.getElementById('blue-tiles').textContent=s.handBlue.length+' tile'+(s.handBlue.length!==1?'s':'');
+  document.getElementById('panel-red').className='player-panel red'+(s.turn==='red'?' myturn':'')+(myRole==='red'?' mine':'');
+  document.getElementById('panel-blue').className='player-panel blue'+(s.turn==='blue'?' myturn':'')+(myRole==='blue'?' mine':'');
+
+  // Turn indicator
+  const ind=document.getElementById('turn-ind');
+  if(lPhase==='steal')ind.textContent='⚡ STEAL — CLICK THE HIDDEN TILE';
+  else if(lPhase==='place'||lPhase==='steal-place')ind.textContent='📍 PLACE — CLICK AN EMPTY CELL';
+  else if(s.forced)ind.textContent=isMyTurn?'⚡ YOUR STEAL PHASE':'⚡ OPPONENT STEALING';
+  else ind.textContent=isMyTurn?'YOUR TURN':"OPPONENT'S TURN";
+  ind.className=isMyTurn?myRole:'neutral';
+
+  // Status
+  document.getElementById('statusbar').textContent=s.msg||'';
+
+  // Cat bar
+  const cb=document.getElementById('cat-bar');cb.innerHTML='';
+  for(const k of s.activeCats){const c=ALL_CATS[k];const p=document.createElement('div');p.className='cat-pill';p.style.background=c.color;p.style.borderColor=c.border;p.innerHTML=`<span>${c.tiles[0].e}</span>${c.label}`;cb.appendChild(p);}
+  if(s.catQueue.length){const h=document.createElement('div');h.className='cat-next';h.textContent='▸ Next: '+ALL_CATS[s.catQueue[0]].label;cb.appendChild(h);}
+
+  // Grid
+  renderGrid(s,isMyTurn);
+
+  // Hands
+  renderHand('red',s.handRed,s);
+  renderHand('blue',s.handBlue,s);
+
+  // Cat progress
+  renderCatProg('red',s);
+  renderCatProg('blue',s);
+
+  // Controls
+  renderControls(s,isMyTurn,myHand);
+}
+
+function renderGrid(s,isMyTurn){
+  const el=document.getElementById('grid');el.innerHTML='';
+  for(let i=0;i<GS;i++){
+    const cell=document.createElement('div');cell.className='cell';
+    const g=s.grid[i];
+    if(g){
+      if(g.locked){
+        const t=getTile(g.tileId);
+        cell.classList.add(g.player,'locked');
+        cell.innerHTML=`<span class="temoji">${t.e}</span><span class="tlabel">${t.l}</span><span class="licon">🔒</span>`;
+      } else if(g.player===myRole){
+        const t=getTile(g.tileId);
+        cell.classList.add(g.player);
+        cell.innerHTML=`<span class="temoji">${t.e}</span><span class="tlabel">${t.l}</span>`;
+      } else {
+        cell.classList.add(g.player,'opponent-hidden');
+        cell.innerHTML='<span style="font-size:1.2rem;opacity:0.25">?</span>';
+      }
+      if(isMyTurn&&lPhase==='steal'&&g.player!==myRole&&!g.locked)cell.classList.add('steal-click');
+    } else {
+      if(isMyTurn&&(lPhase==='place'||lPhase==='steal-place'))cell.classList.add('place-target');
+    }
+    cell.addEventListener('click',(idx=>()=>cellClick(idx))(i));
+    el.appendChild(cell);
+  }
+}
+
+function renderHand(player,hand,s){
+  const el=document.getElementById(player+'-hand');el.innerHTML='';
+  if(player!==myRole){
+    el.innerHTML=`<span style="color:rgba(200,220,255,0.25);font-size:0.72rem">${hand.length} tile${hand.length!==1?'s':''} (hidden)</span>`;
+    return;
+  }
+  const seen={};for(const id of hand)seen[id]=(seen[id]||0)+1;
+  const ids=Object.keys(seen);
+  if(!ids.length){el.innerHTML='<span style="color:rgba(200,220,255,0.25);font-size:0.72rem">No tiles</span>';return;}
+  for(const id of ids){
+    const t=getTile(id);const cnt=seen[id];
+    const d=document.createElement('div');
+    d.className='htile'+(lTile===id?' sel':'');
+    d.innerHTML=`<span style="font-size:1rem">${t.e}</span><span style="font-weight:600">${t.l}${cnt>1?' ×'+cnt:''}</span>`;
+    d.onclick=()=>{if(s.turn===myRole&&(lPhase==='place'||lPhase==='steal-place')){lTile=id;renderGame();}};
+    el.appendChild(d);
+  }
+}
+
+function renderCatProg(player,s){
+  const el=document.getElementById(player+'-cats');el.innerHTML='';
+  if(player!==myRole){el.innerHTML='<span style="color:rgba(200,220,255,0.25);font-size:0.68rem">Hidden</span>';return;}
+  const hand=player==='red'?s.handRed:s.handBlue;
+  const counts={};
+  for(const g of s.grid)if(g&&g.player===player&&!g.locked){const c=getTileCat(g.tileId);counts[c]=(counts[c]||0)+1;}
+  for(const id of hand){const c=getTileCat(id);counts[c]=(counts[c]||0)+1;}
+  const cats=Object.keys(counts);
+  if(!cats.length){el.innerHTML='<span style="color:rgba(200,220,255,0.25);font-size:0.68rem">No tiles yet</span>';return;}
+  for(const cat of cats){
+    const cd=ALL_CATS[cat];const n=counts[cat];
+    const row=document.createElement('div');row.className='cprow';
+    row.innerHTML=`<div style="display:flex;justify-content:space-between"><span>${cd.label}</span><span style="opacity:0.5">${n}/4</span></div>`;
+    const bg=document.createElement('div');bg.className='cpbg';
+    const bar=document.createElement('div');bar.className='cpbar';
+    bar.style.background=player==='red'?'var(--red)':'var(--blue)';
+    bar.style.width=Math.min(100,n/4*100)+'%';
+    bg.appendChild(bar);row.appendChild(bg);el.appendChild(row);
+  }
+}
+
+function renderControls(s,isMyTurn,myHand){
+  const bn=document.getElementById('btn-next');
+  const bs=document.getElementById('btn-steal');
+  const bp=document.getElementById('btn-place');
+  const bsk=document.getElementById('btn-skip');
+  if(!isMyTurn){
+    bn.disabled=bs.disabled=bp.disabled=bsk.disabled=true;
+    bs.style.cssText=''; bs.textContent='⚡ STEAL';
+    bp.textContent='📍 PLACE';
+    return;
+  }
+  const answered=lPhase==='answered'||lPhase==='place'||lPhase==='steal'||lPhase==='steal-place';
+  bn.disabled=answered||(lPhase!=='idle'&&lPhase!=='question');
+  bsk.disabled=lPhase!=='idle'&&lPhase!=='question';
+  bs.disabled=!lQ||(lPhase!=='answered');
+  bp.disabled=!lQ||(lPhase!=='answered')||!myHand.length||lStealAvail;
+  bs.textContent=lPhase==='steal'?'✕ CANCEL STEAL':'⚡ STEAL';
+  bp.textContent=(lPhase==='place'||lPhase==='steal-place')?'✕ CANCEL':'📍 PLACE';
+  if(lPhase==='steal'){bs.disabled=false;}
+  if(lPhase==='place'||lPhase==='steal-place'){bp.disabled=false;}
+  if(lStealAvail&&lPhase==='answered'){
+    bs.style.background='linear-gradient(135deg,#ff8800,#ffcc00)';
+    bs.style.color='#111';bs.style.boxShadow='0 0 18px rgba(255,204,0,0.7)';
+    bs.style.animation='steal-pulse 0.8s infinite alternate';
+    bs.disabled=false;
+  } else {
+    bs.style.cssText='';
+  }
+}
+
+// ============================================================
+// QUESTIONS
+// ============================================================
+function getEligible(s){
+  const myHand=myRole==='red'?s.handRed:s.handBlue;
+  const myPlaced=new Set(s.grid.filter(g=>g&&g.player===s.turn).map(g=>g.tileId));
+  const oppOnBoard=new Set(s.grid.filter(g=>g&&g.player===opp(s.turn)&&!g.locked).map(g=>g.tileId));
   return QUESTIONS.map((q,i)=>({q,i})).filter(({q,i})=>{
-    if((gs.usedQ||[]).includes(i)) return false;
-    if(!(gs.activeCats||[]).includes(q.cat)) return false;
-    const tile=tileByLabel(q.cat,q.answer);
-    if(!tile) return false;
-    if(myPlaced.has(tile.id)) return false;
-    if(gs.lastStolenTileId===tile.id) return false;
-    if(gs.forcedStealMode && !oppIds.has(tile.id)) return false;
+    if(s.usedQ.includes(i))return false;
+    if(!s.activeCats.includes(q.cat))return false;
+    const t=tileByLabel(q.cat,q.a);if(!t)return false;
+    if(myPlaced.has(t.id))return false;
+    if(s.lastStolen===t.id)return false;
+    if(s.forced&&!oppOnBoard.has(t.id))return false;
     return true;
   });
 }
 
-// ================================================================
-// FIREBASE INIT — uses dynamic import so functions stay on window scope
-// ================================================================
-let db, roomUnsubscribe=null;
-let myRole=null;
-let currentRoomCode=null;
-let gameState=null;
-
-// Local UI state
-let localPhase='question', localSelectedTile=null, localStealTile=null;
-let localAnswered=false, localCurrentQ=null, localStealAvailable=false;
-
-function showError(msg){
-  const el=document.getElementById('firebase-error');
-  el.style.display='block'; el.textContent=msg;
-  document.getElementById('lobby-status').textContent='Connection error — see above';
-}
-
-// Initialise Firebase using compat SDK (loaded via <script> tags in <head>)
-if(FIREBASE_CONFIG.apiKey==='YOUR_API_KEY'){
-  showError('⚠️ Config not filled in. Open index.html and replace the YOUR_* values with your real Firebase config from the Firebase console.');
-} else {
-  try {
-    firebase.initializeApp(FIREBASE_CONFIG);
-    db = firebase.database();
-    console.log('[BG] Firebase connected OK');
-    document.getElementById('lobby-status').textContent='Connected — enter a code or create a new game';
-  } catch(e){
-    showError('Firebase init failed: '+e.message+'. Double-check your config values.');
-  }
-}
-
-function roomRef(code){ return db.ref('battlegrid/rooms/'+code); }
-
-async function saveState(s){
-  if(!currentRoomCode||!db) return;
-  const clean={...s, grid:(s.grid||[]).map(v=>v==null?0:v)};
-  await roomRef(currentRoomCode).set(clean);
-}
-
-function normaliseState(data){
-  if(!data) return null;
-  if(data.grid&&!Array.isArray(data.grid)){
-    const arr=[];
-    for(let i=0;i<GRID_SIZE;i++) arr[i]=data.grid[i]!==undefined?data.grid[i]:0;
-    data.grid=arr;
-  }
-  if(Array.isArray(data.grid)){
-    for(let i=0;i<GRID_SIZE;i++) if(data.grid[i]===undefined) data.grid[i]=0;
-  }
-  if(data.usedQ&&!Array.isArray(data.usedQ)) data.usedQ=Object.values(data.usedQ);
-  if(!data.usedQ) data.usedQ=[];
-  if(!data.players) data.players={red:false,blue:false};
-  if(!data.players.red) data.players.red=false;
-  if(!data.players.blue) data.players.blue=false;
-  // Firebase drops empty arrays/objects — restore all required fields
-  if(!data.hand) data.hand={red:[],blue:[]};
-  if(!data.hand.red) data.hand.red=[];
-  if(!data.hand.blue) data.hand.blue=[];
-  if(!data.scores) data.scores={red:0,blue:0};
-  if(data.scores.red===undefined) data.scores.red=0;
-  if(data.scores.blue===undefined) data.scores.blue=0;
-  if(!data.activeCats) data.activeCats=[];
-  if(!data.catQueue) data.catQueue=[];
-  if(!data.turn) data.turn='red';
-  if(!data.grid) data.grid=Array(GRID_SIZE).fill(0);
-  return data;
-}
-
-// ================================================================
-// INITIAL STATE
-// ================================================================
-function makeInitialState(code){
-  return {
-    roomCode:code,
-    players:{red:false,blue:false},
-    started:false,
-    turn:'red',
-    scores:{red:0,blue:0},
-    hand:{red:[],blue:[]},
-    grid:Array(GRID_SIZE).fill(0),
-    usedQ:[],
-    gameOver:false,
-    activeCats:CAT_KEYS.slice(0,2),
-    catQueue:CAT_KEYS.slice(2),
-    forcedStealMode:false,
-    lastStolenTileId:null,
-    statusMsg:'Waiting for both players...',
-  };
-}
-
-// ================================================================
-// ROOM MANAGEMENT
-// ================================================================
-function generateCode(){
-  return String(Math.floor(1000+Math.random()*9000));
-}
-
-async function createRoom(){
-  if(!db){ alert('Firebase not connected yet — wait a moment and try again'); return; }
-  const code=generateCode();
-  const initial=makeInitialState(code);
-  currentRoomCode=code;
-  try {
-    await roomRef(code).set(initial);
-  } catch(e){ alert('Error creating room: '+e.message); return; }
-  console.log('[BG] Room created:',code);
-  showSideLobby(code, initial);
-  subscribeToRoom(code);
-}
-
-async function joinRoom(){
-  if(!db){ alert('Firebase not connected yet — wait a moment and try again'); return; }
-  const input=document.getElementById('room-input').value.trim();
-  if(input.length!==4||!/^\d{4}$/.test(input)){
-    document.getElementById('lobby-status').textContent='Please enter a valid 4-digit code';
-    return;
-  }
-  let snap;
-  try { snap=await roomRef(input).get(); } catch(e){ alert('Error: '+e.message); return; }
-  if(!snap.val()){
-    document.getElementById('lobby-status').textContent='Room '+input+' not found. Check the code or create a new game.';
-    return;
-  }
-  currentRoomCode=input;
-  const gs=normaliseState(snap.val());
-  showSideLobby(input, gs);
-  subscribeToRoom(input);
-}
-
-function subscribeToRoom(code){
-  if(roomUnsubscribe) roomUnsubscribe();
-  const listenRef=roomRef(code);
-  roomUnsubscribe=function(){ listenRef.off('value'); };
-  listenRef.on('value', snapshot=>{
-    const raw=snapshot.val();
-    if(!raw) return;
-    const data=normaliseState(raw);
-    gameState=data;
-    if(myRole) onRemoteStateUpdate(data);
-    else updateSideLobbyButtons(data);
-  });
-}
-
-function showSideLobby(code, gs){
-  document.getElementById('lobby-code').style.display='none';
-  document.getElementById('lobby-side').style.display='flex';
-  document.getElementById('room-code-display').textContent='ROOM CODE: '+code;
-  updateSideLobbyButtons(gs);
-}
-
-function updateSideLobbyButtons(gs){
-  const btnRed=document.getElementById('btn-join-red');
-  const btnBlue=document.getElementById('btn-join-blue');
-  const status=document.getElementById('lobby-side-status');
-  if(!gs){ btnRed.disabled=false; btnBlue.disabled=false; return; }
-  btnRed.disabled=!!gs.players.red;
-  btnBlue.disabled=!!gs.players.blue;
-  if(gs.players.red&&gs.players.blue) status.textContent='Both players joined — game starting!';
-  else if(gs.players.red) status.textContent='🔴 P1 has joined — waiting for 🔵 P2...';
-  else if(gs.players.blue) status.textContent='🔵 P2 has joined — waiting for 🔴 P1...';
-  else status.textContent='Choose your side';
-}
-
-function leaveRoom(){
-  if(roomUnsubscribe){ roomUnsubscribe(); roomUnsubscribe=null; }
-  currentRoomCode=null; myRole=null;
-  resetLocalUI();
-  document.getElementById('lobby-side').style.display='none';
-  document.getElementById('lobby-code').style.display='block';
-  document.getElementById('room-input').value='';
-  document.getElementById('lobby-status').textContent='Enter a code or create a new game';
-}
-
-async function joinAs(role){
-  if(!currentRoomCode) return;
-  document.getElementById('btn-join-red').disabled=true;
-  document.getElementById('btn-join-blue').disabled=true;
-  document.getElementById('lobby-side-status').textContent='Joining...';
-  let snap;
-  try { snap=await roomRef(currentRoomCode).get(); } catch(e){ alert('Error: '+e.message); return; }
-  let gs=normaliseState(snap.val());
-  if(!gs) gs=makeInitialState(currentRoomCode);
-  if(gs.players[role]){
-    document.getElementById('lobby-side-status').textContent='That side is already taken!';
-    updateSideLobbyButtons(gs);
-    return;
-  }
-  myRole=role;
-  gs.players[role]=true;
-  const bothJoined=gs.players.red&&gs.players.blue;
-  if(bothJoined){
-    gs.started=true;
-    gs.statusMsg='Battle Grid begins! Red goes first.';
-  }
-  await saveState(gs);
-  gameState=gs;
-  dbg('joinAs: role='+role+' bothJoined='+bothJoined+' started='+gs.started);
-  // Always show the game screen now — onRemoteStateUpdate handles waiting vs live
-  document.getElementById('lobby-side').style.display='none';
-  document.getElementById('game').style.display='block';
-  resetLocalUI();
-  // Drive the UI directly — don't rely on onValue firing again
-  onRemoteStateUpdate(gs);
-}
-
-async function resetGame(){
-  if(roomUnsubscribe){ roomUnsubscribe(); roomUnsubscribe=null; }
-  myRole=null; currentRoomCode=null;
-  resetLocalUI(); gameState=null;
-  document.getElementById('lobby-code').style.display='block';
-  document.getElementById('lobby-side').style.display='none';
-  document.getElementById('game').style.display='none';
-  document.getElementById('end-overlay').classList.remove('show');
-  hideWaiting();
-  document.getElementById('room-input').value='';
-  document.getElementById('lobby-status').textContent='Enter a code or create a new game';
-  document.getElementById('question-text').textContent='Waiting for game to start...';
-  document.getElementById('answers').innerHTML='';
-}
-
-function resetLocalUI(){
-  localPhase='question'; localSelectedTile=null; localStealTile=null;
-  localAnswered=false; localCurrentQ=null; localStealAvailable=false;
-}
-
-// ================================================================
-// REMOTE STATE UPDATE
-// ================================================================
-function dbg(msg){
-  const el=document.getElementById('debug-bar');
-  if(el) el.textContent=new Date().toLocaleTimeString()+' | '+msg;
-  console.log('[BG]',msg);
-}
-
-function onRemoteStateUpdate(gs){
-  dbg('update: myRole='+myRole+' started='+gs.started+' turn='+gs.turn+' gameOver='+gs.gameOver);
-  if(!myRole) return;
-  if(gs.gameOver){ showEndScreen(gs); return; }
-
-  if(!gs.started){
-    // Waiting for the other player — show overlay
-    document.getElementById('game').style.display='block';
-    showWaiting();
-    return;
-  }
-
-  // Both players in — hide waiting, show game
-  hideWaiting();
-  document.getElementById('lobby-code').style.display='none';
-  document.getElementById('lobby-side').style.display='none';
-  document.getElementById('game').style.display='block';
-
-  // If no question is active, set the prompt text
-  if(!localCurrentQ){
-    document.getElementById('question-text').textContent=
-      gs.turn===myRole ? 'Press NEXT Q to begin!' : "Waiting for opponent...";
-    document.getElementById('answers').innerHTML='';
-  }
-
-  renderAll();
-}
-
-// ================================================================
-// RENDER
-// ================================================================
-function renderAll(){
-  if(!gameState||!myRole) return;
-  const gs=gameState;
-  renderScores(gs);
-  renderCatBar(gs);
-  renderGrid(gs);
-  renderHands(gs);
-  renderCatProgress(gs);
-  renderControls(gs);
-  document.getElementById('status').textContent=gs.statusMsg||'';
-}
-
-function renderScores(gs){
-  document.getElementById('red-score').textContent=gs.scores.red;
-  document.getElementById('blue-score').textContent=gs.scores.blue;
-  const rh=(gs.hand.red||[]).length, bh=(gs.hand.blue||[]).length;
-  document.getElementById('red-tile-count').textContent=rh+' tile'+(rh!==1?'s':'');
-  document.getElementById('blue-tile-count').textContent=bh+' tile'+(bh!==1?'s':'');
-  document.getElementById('panel-red').className='player-panel red'+(gs.turn==='red'?' active-turn':'')+(myRole==='red'?' my-panel':'');
-  document.getElementById('panel-blue').className='player-panel blue'+(gs.turn==='blue'?' active-turn':'')+(myRole==='blue'?' my-panel':'');
-  const badge=document.getElementById('my-role-badge');
-  badge.textContent=myRole==='red'?'🔴 YOU ARE PLAYER 1 (RED)':'🔵 YOU ARE PLAYER 2 (BLUE)';
-  badge.style.color=myRole==='red'?'var(--red)':'var(--blue)';
-  const isMyTurn=gs.turn===myRole;
-  const ind=document.getElementById('turn-indicator');
-  if(localPhase==='steal') ind.textContent='⚡ STEAL — CLICK WHERE IT IS HIDDEN!';
-  else if(localPhase==='place'||localPhase==='steal-place') ind.textContent='📍 PLACE — CLICK AN EMPTY CELL';
-  else if(gs.forcedStealMode) ind.textContent=isMyTurn?'⚡ YOUR STEAL PHASE':'⚡ OPPONENT STEAL PHASE';
-  else ind.textContent=isMyTurn?'YOUR TURN':"OPPONENT'S TURN";
-  ind.className=isMyTurn?myRole:'neutral';
-}
-
-function renderCatBar(gs){
-  const bar=document.getElementById('cat-bar');
-  bar.innerHTML='';
-  for(const key of (gs.activeCats||[])){
-    const cat=ALL_CATEGORIES[key];
-    const pill=document.createElement('div');
-    pill.className='cat-pill';
-    pill.style.background=cat.color; pill.style.borderColor=cat.border;
-    if(gs.forcedStealMode) pill.style.opacity='0.5';
-    pill.innerHTML=`<span style="font-size:1.1rem">${cat.tiles[0].e}</span> ${cat.label}`;
-    bar.appendChild(pill);
-  }
-  if((gs.catQueue||[]).length>0){
-    const hint=document.createElement('div');
-    hint.className='cat-queue-hint';
-    hint.textContent='▸ Next: '+ALL_CATEGORIES[gs.catQueue[0]].label;
-    bar.appendChild(hint);
-  }
-}
-
-function renderGrid(gs){
-  const gridEl=document.getElementById('grid');
-  gridEl.innerHTML='';
-  const opponent=opp(myRole);
-  const isMyTurn=gs.turn===myRole;
-  const grid=gs.grid||[];
-
-  for(let i=0;i<GRID_SIZE;i++){
-    const cell=document.createElement('div');
-    cell.className='cell'; cell.dataset.i=i;
-    const g=grid[i]&&grid[i]!==0?grid[i]:null;
-
-    if(g){
-      const isMine=g.player===myRole;
-      if(g.locked){
-        const tile=getTile(g.tileId);
-        cell.classList.add(g.player,'locked');
-        if(g.cat) cell.classList.add('cat-'+g.cat);
-        cell.innerHTML=`<span class="tile-emoji">${tile.e}</span><span class="tile-label">${tile.l}</span><span class="lock-icon">🔒</span>`;
-      } else if(isMine){
-        const tile=getTile(g.tileId);
-        cell.classList.add(g.player);
-        cell.innerHTML=`<span class="tile-emoji">${tile.e}</span><span class="tile-label">${tile.l}</span>`;
-      } else {
-        // Opponent tile — hidden, no info, no glow
-        cell.classList.add(g.player,'opponent-hidden');
-        cell.innerHTML=`<span style="font-size:1.3rem;opacity:0.3">?</span>`;
-      }
-    }
-
-    // Steal mode: opponent tiles are clickable but do NOT glow
-    if(localPhase==='steal'&&isMyTurn&&g&&g.player===opponent&&!g.locked){
-      cell.classList.add('steal-clickable');
-    }
-    // Place mode: empty cells glow green
-    if((localPhase==='place'||localPhase==='steal-place')&&isMyTurn&&!g){
-      cell.classList.add('place-target');
-    }
-
-    cell.addEventListener('click',(function(idx){return function(){handleCellClick(idx);};})(i));
-    gridEl.appendChild(cell);
-  }
-}
-
-function renderHands(gs){
-  for(const player of ['red','blue']){
-    const el=document.getElementById(player+'-hand');
-    el.innerHTML='';
-    const isMe=player===myRole;
-    if(!isMe){
-      const cnt=(gs.hand[player]||[]).length;
-      el.innerHTML=`<span style="color:rgba(200,220,255,0.3);font-size:0.75rem;">${cnt} tile${cnt!==1?'s':''} (hidden)</span>`;
-      continue;
-    }
-    const seen={};
-    for(const tid of (gs.hand[player]||[])) seen[tid]=(seen[tid]||0)+1;
-    const tids=Object.keys(seen);
-    for(const tid of tids){
-      const tile=getTile(tid);
-      const cnt=seen[tid];
-      const div=document.createElement('div');
-      div.className='hand-tile'+(localSelectedTile===tid&&gs.turn===player?' selected':'');
-      div.innerHTML=`<span class="he">${tile.e}</span><span class="hl">${tile.l}${cnt>1?' ×'+cnt:''}</span>`;
-      (function(t){div.onclick=function(){
-        if(gs.turn!==myRole) return;
-        if(localPhase==='place'||localPhase==='steal-place'){localSelectedTile=t;renderAll();}
-      };})(tid);
-      el.appendChild(div);
-    }
-    if(!tids.length) el.innerHTML='<span style="color:rgba(200,220,255,0.3);font-size:0.75rem;">No tiles</span>';
-  }
-}
-
-function renderCatProgress(gs){
-  for(const player of ['red','blue']){
-    const el=document.getElementById(player+'-cats');
-    el.innerHTML='';
-    if(player!==myRole){
-      el.innerHTML='<span style="color:rgba(200,220,255,0.3);font-size:0.72rem;">Hidden</span>';
-      continue;
-    }
-    const counts={};
-    const grid=gs.grid||[];
-    for(const g of grid) if(g&&g!==0&&g.player===player&&!g.locked){const c=getTileCat(g.tileId);counts[c]=(counts[c]||0)+1;}
-    for(const tid of (gs.hand[player]||[])){const c=getTileCat(tid);counts[c]=(counts[c]||0)+1;}
-    const cats=Object.keys(counts);
-    if(!cats.length){el.innerHTML='<span style="color:rgba(200,220,255,0.3);font-size:0.72rem;">No tiles yet</span>';continue;}
-    for(const cat of cats){
-      const cd=ALL_CATEGORIES[cat];
-      const row=document.createElement('div'); row.className='cat-prog-row';
-      row.innerHTML=`<div style="display:flex;justify-content:space-between"><span>${cd.label}</span><span style="font-family:Share Tech Mono;font-size:0.68rem;opacity:0.6">${counts[cat]}/4</span></div>`;
-      const bg=document.createElement('div'); bg.className='cat-prog-bar-bg';
-      const bar=document.createElement('div'); bar.className='cat-prog-bar';
-      bar.style.background=player==='red'?'var(--red)':'var(--blue)';
-      bar.style.width=Math.min(100,(counts[cat]/4)*100)+'%';
-      bg.appendChild(bar); row.appendChild(bg); el.appendChild(row);
-    }
-  }
-}
-
-function renderControls(gs){
-  const isMyTurn=gs.turn===myRole;
-  const bNext=document.getElementById('btn-next');
-  const bSteal=document.getElementById('btn-steal');
-  const bPlace=document.getElementById('btn-place');
-  const bSkip=document.getElementById('btn-skip');
-  if(!isMyTurn){
-    bNext.disabled=bSteal.disabled=bPlace.disabled=bSkip.disabled=true;
-    bSteal.style.background=bSteal.style.color=bSteal.style.boxShadow=bSteal.style.animation='';
-    bSteal.textContent='⚡ STEAL'; bPlace.textContent='📍 PLACE';
-    return;
-  }
-  bNext.disabled=localPhase!=='question'||localAnswered;
-  bSkip.disabled=localPhase!=='question';
-  bSteal.disabled=localPhase!=='question'||!localAnswered;
-  bPlace.disabled=localPhase!=='question'||!localAnswered||!(gs.hand[myRole]||[]).length||localStealAvailable;
-  bSteal.textContent=localPhase==='steal'?'✕ CANCEL':'⚡ STEAL';
-  if(localPhase==='steal') bSteal.disabled=false;
-  bPlace.textContent=(localPhase==='place'||localPhase==='steal-place')?'✕ CANCEL':'📍 PLACE';
-  if(localPhase==='place'||localPhase==='steal-place') bPlace.disabled=false;
-  if(localStealAvailable&&localPhase==='question'){
-    bSteal.style.background='linear-gradient(135deg,#ff8800,#ffcc00)';
-    bSteal.style.color='#111';
-    bSteal.style.boxShadow='0 0 20px rgba(255,204,0,0.8)';
-    bSteal.style.animation='steal-pulse-btn 0.8s infinite alternate';
-    bSteal.disabled=false;
-  } else {
-    bSteal.style.background=bSteal.style.color=bSteal.style.boxShadow=bSteal.style.animation='';
-  }
-}
-
-// ================================================================
-// QUESTIONS
-// ================================================================
 function nextQuestion(){
-  if(!gameState||gameState.turn!==myRole||localAnswered) return;
-  const gs=gameState;
-  const pool=eligibleQuestions(gs);
-  if(!pool.length){ endGameInState(gs,'No more moves available'); saveState(gs); return; }
+  if(!gameState||gameState.turn!==myRole)return;
+  if(lPhase!=='idle'&&lPhase!=='question')return;
+  const s=gameState;
+  const pool=getEligible(s);
+  if(!pool.length){endGame(s,'No more questions!');return;}
   const pick=pool[Math.floor(Math.random()*pool.length)];
-  localCurrentQ=buildQuestion(pick.q);
-  localAnswered=false; localSelectedTile=null; localStealAvailable=false;
-  const updated={...gs, usedQ:[...(gs.usedQ||[]),pick.i], lastStolenTileId:null,
-    statusMsg:(gs.forcedStealMode?'Steal Phase':'Question')+' '+(gs.usedQ.length+1)};
+  const opts=CAT_OPTS[pick.q.cat];
+  const others=opts.filter(o=>o!==pick.q.a).sort(()=>Math.random()-0.5).slice(0,3);
+  const choices=[pick.q.a,...others].sort(()=>Math.random()-0.5);
+  const t=tileByLabel(pick.q.cat,pick.q.a);
+  lQ={q:pick.q.q,choices,answerIdx:choices.indexOf(pick.q.a),tileId:t.id,cat:pick.q.cat};
+  lPhase='question';
+  lStealAvail=false;
+  const updated={...s,usedQ:[...s.usedQ,pick.i],lastStolen:null,msg:'Question '+(s.usedQ.length+1)};
   gameState=updated;
   saveState(updated);
-  renderQuestion();
-  renderControls(updated);
+  showQuestion();
+  renderControls(updated,true,myRole==='red'?updated.handRed:updated.handBlue);
 }
 
-function renderQuestion(){
-  const q=localCurrentQ; if(!q) return;
-  document.getElementById('question-text').textContent=q.q;
-  const el=document.getElementById('answers'); el.innerHTML='';
-  ['A','B','C','D'].forEach((ltr,i)=>{
-    const btn=document.createElement('button');
-    btn.className='answer-btn';
-    btn.innerHTML=`<span class="opt">${ltr}.</span> ${q.options[i]}`;
-    btn.addEventListener('click',(idx=>()=>selectAnswer(idx))(i));
-    el.appendChild(btn);
+function showQuestion(){
+  document.getElementById('qtext').textContent=lQ.q;
+  const el=document.getElementById('answers');el.innerHTML='';
+  ['A','B','C','D'].forEach((l,i)=>{
+    const b=document.createElement('button');b.className='abtn';
+    b.innerHTML=`<span class="aopt">${l}.</span>${lQ.choices[i]}`;
+    b.addEventListener('click',(()=>()=>selectAnswer(i))());
+    el.appendChild(b);
   });
 }
 
 function selectAnswer(idx){
-  if(localAnswered||!localCurrentQ||!gameState||gameState.turn!==myRole) return;
-  const q=localCurrentQ;
-  localAnswered=true;
-  const correct=idx===q.a;
-  document.querySelectorAll('.answer-btn').forEach((b,i)=>{
-    if(i===q.a) b.classList.add('correct');
-    else if(i===idx) b.classList.add('wrong');
+  if(!lQ||lPhase!=='question'||!gameState||gameState.turn!==myRole)return;
+  const correct=idx===lQ.answerIdx;
+  lPhase='answered';
+  document.querySelectorAll('.abtn').forEach((b,i)=>{
+    if(i===lQ.answerIdx)b.classList.add('correct');
+    else if(i===idx)b.classList.add('wrong');
     b.disabled=true;
   });
-  const gs=gameState;
-  const grid=gs.grid||[];
+  const s=gameState;
+  const myHand=myRole==='red'?[...s.handRed]:[...s.handBlue];
   if(correct){
-    const tile=getTile(q.tile);
-    const stealPossible=grid.some(g=>g&&g!==0&&g.tileId===q.tile&&g.player===opp(myRole)&&!g.locked);
-    const hasEmpty=grid.some(g=>!g||g===0);
-    localStealAvailable=stealPossible;
-    const updated={...gs, hand:{...gs.hand,[myRole]:[...(gs.hand[myRole]||[]),q.tile]}};
-    if(stealPossible){
-      updated.statusMsg='✅ CORRECT! '+tile.l+' earned — ⚡ STEAL is the only option!';
+    myHand.push(lQ.tileId);
+    const tile=getTile(lQ.tileId);
+    const oppBoard=s.grid.some(g=>g&&g.tileId===lQ.tileId&&g.player===opp(myRole)&&!g.locked);
+    const hasEmpty=s.grid.some(g=>!g);
+    lStealAvail=oppBoard;
+    const updated={...s};
+    if(myRole==='red')updated.handRed=myHand; else updated.handBlue=myHand;
+    if(oppBoard){
+      updated.msg='✅ CORRECT! '+tile.l+' earned — ⚡ STEAL is your only option!';
     } else if(hasEmpty){
-      localPhase='place'; localSelectedTile=q.tile;
-      updated.statusMsg='✅ CORRECT! '+tile.l+' earned — placing on grid...';
+      lPhase='place'; lTile=lQ.tileId;
+      updated.msg='✅ CORRECT! '+tile.l+' earned — place it on the grid';
     } else {
-      updated.statusMsg='✅ CORRECT! '+tile.l+' earned — use STEAL!';
+      updated.msg='✅ CORRECT! '+tile.l+' earned';
     }
     gameState=updated;
     saveState(updated);
   } else {
-    localStealAvailable=false;
-    const updated={...gs, statusMsg:'❌ WRONG! Answer was: '+q.options[q.a]};
+    const updated={...s,msg:'❌ Wrong! The answer was: '+lQ.choices[lQ.answerIdx]};
     gameState=updated;
     saveState(updated);
   }
-  renderAll();
+  renderGame();
 }
 
-// ================================================================
+// ============================================================
 // PLACEMENT
-// ================================================================
+// ============================================================
 function enterPlaceMode(){
-  if(!gameState||gameState.turn!==myRole) return;
-  if(localPhase==='place'){localPhase='question';localSelectedTile=null;renderAll();return;}
-  if(!(gameState.hand[myRole]||[]).length){document.getElementById('status').textContent='No tiles in hand!';return;}
-  localPhase='place';
-  if(!localSelectedTile) localSelectedTile=(gameState.hand[myRole]||[])[0];
-  renderAll();
+  if(!gameState||gameState.turn!==myRole)return;
+  if(lPhase==='place'){lPhase='answered';lTile=null;renderGame();return;}
+  if(lPhase!=='answered')return;
+  const myHand=myRole==='red'?gameState.handRed:gameState.handBlue;
+  if(!myHand.length)return;
+  lPhase='place';
+  if(!lTile)lTile=myHand[0];
+  renderGame();
 }
 
-function handleCellClick(idx){
-  if(!gameState||gameState.turn!==myRole) return;
-  if(localPhase==='place'||localPhase==='steal-place') placeTile(idx);
-  else if(localPhase==='steal') attemptSteal(idx);
+function cellClick(idx){
+  if(!gameState||gameState.turn!==myRole)return;
+  if(lPhase==='place'||lPhase==='steal-place')placeTile(idx);
+  else if(lPhase==='steal')attemptSteal(idx);
 }
 
 function placeTile(idx){
-  const gs=gameState;
-  const grid=gs.grid||[];
-  if(grid[idx]&&grid[idx]!==0){document.getElementById('status').textContent='Cell is occupied!';return;}
-  if(!localSelectedTile){document.getElementById('status').textContent='Select a tile first!';return;}
-  const hand=[...(gs.hand[myRole]||[])];
-  const hi=hand.indexOf(localSelectedTile);
-  if(hi===-1){document.getElementById('status').textContent="You don't have that tile!";return;}
-
-  const placedId=localSelectedTile;
-  localPhase='question'; localSelectedTile=null; localAnswered=false;
-  localCurrentQ=null; localStealAvailable=false;
-
-  hand.splice(hi,1);
-  const newGrid=[...grid];
+  const s=gameState;
+  if(s.grid[idx]){document.getElementById('statusbar').textContent='Cell occupied!';return;}
+  if(!lTile){document.getElementById('statusbar').textContent='Select a tile first!';return;}
+  const myHand=myRole==='red'?[...s.handRed]:[...s.handBlue];
+  const hi=myHand.indexOf(lTile);
+  if(hi===-1){document.getElementById('statusbar').textContent="You don't have that tile!";return;}
+  const placedId=lTile;
+  lPhase='idle';lTile=null;lQ=null;lStealAvail=false;
+  myHand.splice(hi,1);
+  const newGrid=[...s.grid];
   newGrid[idx]={tileId:placedId,player:myRole,locked:false};
   const tile=getTile(placedId);
-
-  const updated={...gs, hand:{...gs.hand,[myRole]:hand}, grid:newGrid,
-    statusMsg:(tile?tile.l:'Tile')+' placed!'};
-
-  checkForSetsInState(updated,myRole);
+  const updated={...s};
+  if(myRole==='red')updated.handRed=myHand; else updated.handBlue=myHand;
+  updated.grid=newGrid;
+  updated.msg=(tile?tile.l:'Tile')+' placed!';
+  checkSets(updated,myRole);
   if(!updated.gameOver){
     updated.turn=opp(myRole);
-    updateForcedStealMode(updated);
+    checkForced(updated);
   }
   gameState=updated;
   saveState(updated);
-  document.getElementById('question-text').textContent='Press NEXT Q when ready!';
+  document.getElementById('qtext').textContent='Press NEXT Q when ready!';
   document.getElementById('answers').innerHTML='';
-  document.getElementById('steal-mode-bar').classList.remove('show');
-  if(updated.gameOver){showEndScreen(updated);return;}
-  renderAll();
+  document.getElementById('steal-bar').classList.remove('show');
+  if(updated.gameOver){showEndScreen(updated);}else{renderGame();}
 }
 
-// ================================================================
+// ============================================================
 // STEAL
-// ================================================================
+// ============================================================
 function activateSteal(){
-  if(!gameState||gameState.turn!==myRole) return;
-  if(localPhase==='steal'){
-    localPhase='question'; localStealTile=null;
-    document.getElementById('steal-mode-bar').classList.remove('show');
-    renderAll(); return;
+  if(!gameState||gameState.turn!==myRole)return;
+  if(lPhase==='steal'){
+    lPhase='answered';lStealTile=null;
+    document.getElementById('steal-bar').classList.remove('show');
+    renderGame();return;
   }
-  if(!localAnswered||!localCurrentQ){document.getElementById('status').textContent='Answer a question first!';return;}
-  const targetId=localCurrentQ.tile;
-  const grid=gameState.grid||[];
-  const oppHas=grid.some(g=>g&&g!==0&&g.tileId===targetId&&g.player===opp(myRole)&&!g.locked);
-  if(!oppHas){document.getElementById('status').textContent="Opponent doesn't have that tile!";return;}
-  localPhase='steal'; localStealTile=targetId;
-  const t=getTile(targetId);
-  document.getElementById('steal-mode-bar').classList.add('show');
-  document.getElementById('status').textContent='⚡ Click where you think '+t.l+' is hidden!';
-  renderAll();
+  if(!lQ||lPhase!=='answered')return;
+  const oppHas=gameState.grid.some(g=>g&&g.tileId===lQ.tileId&&g.player===opp(myRole)&&!g.locked);
+  if(!oppHas){document.getElementById('statusbar').textContent="Opponent doesn't have that tile on the board!";return;}
+  lPhase='steal';lStealTile=lQ.tileId;
+  const t=getTile(lQ.tileId);
+  document.getElementById('steal-bar').classList.add('show');
+  document.getElementById('statusbar').textContent='⚡ Click where you think '+t.l+' is hidden!';
+  renderGame();
 }
 
 function attemptSteal(idx){
-  const gs=gameState;
-  const grid=gs.grid||[];
-  const g=grid[idx]&&grid[idx]!==0?grid[idx]:null;
-  if(!g){document.getElementById('status').textContent='Empty cell — steal failed!';failSteal();return;}
-  if(g.locked){document.getElementById('status').textContent="Can't steal a locked tile!";return;}
-  if(g.player===myRole){document.getElementById('status').textContent="That's your own tile!";return;}
-  if(g.tileId!==localStealTile){
-    document.getElementById('status').textContent='❌ Wrong tile! Steal failed!';
-    failSteal(); return;
-  }
-  const stolenId=localStealTile;
+  const s=gameState;const g=s.grid[idx];
+  if(!g){document.getElementById('statusbar').textContent='Empty cell!';failSteal();return;}
+  if(g.locked){document.getElementById('statusbar').textContent="Can't steal a locked tile!";return;}
+  if(g.player===myRole){document.getElementById('statusbar').textContent="That's your own tile!";return;}
+  if(g.tileId!==lStealTile){document.getElementById('statusbar').textContent='❌ Wrong tile! Steal failed!';failSteal();return;}
+  const stolenId=lStealTile;
   const t=getTile(stolenId);
-  localPhase='steal-place'; localSelectedTile=stolenId; localStealTile=null;
-  document.getElementById('steal-mode-bar').classList.remove('show');
-
-  const newGrid=[...grid];
-  newGrid[idx]=0;
-  const newHand=[...(gs.hand[myRole]||[]),stolenId];
-  const updated={...gs, grid:newGrid, hand:{...gs.hand,[myRole]:newHand},
-    lastStolenTileId:stolenId, statusMsg:'⚡ '+t.l+' STOLEN! Now place it!'};
-  gameState=updated;
-  saveState(updated);
-  renderAll();
+  lPhase='steal-place';lTile=stolenId;lStealTile=null;
+  document.getElementById('steal-bar').classList.remove('show');
+  const newGrid=[...s.grid];newGrid[idx]=null;
+  const myHand=myRole==='red'?[...s.handRed,...[stolenId]]:[...s.handBlue,...[stolenId]];
+  const updated={...s};
+  if(myRole==='red')updated.handRed=myHand; else updated.handBlue=myHand;
+  updated.grid=newGrid;updated.lastStolen=stolenId;
+  updated.msg='⚡ '+t.l+' STOLEN! Now place it.';
+  gameState=updated;saveState(updated);renderGame();
 }
 
 function failSteal(){
-  localPhase='question'; localStealTile=null; localAnswered=false;
-  localCurrentQ=null; localStealAvailable=false;
-  document.getElementById('steal-mode-bar').classList.remove('show');
-  const updated={...gameState, turn:opp(myRole), statusMsg:'Steal failed — '+opp(myRole).toUpperCase()+"'s turn!"};
-  updateForcedStealMode(updated);
-  gameState=updated;
-  saveState(updated);
-  document.getElementById('question-text').textContent='Press NEXT Q when ready!';
+  lPhase='idle';lStealTile=null;lQ=null;lStealAvail=false;
+  document.getElementById('steal-bar').classList.remove('show');
+  const updated={...gameState,turn:opp(myRole),msg:'Steal failed — '+opp(myRole).toUpperCase()+"'s turn!"};
+  checkForced(updated);gameState=updated;saveState(updated);
+  document.getElementById('qtext').textContent='Press NEXT Q when ready!';
   document.getElementById('answers').innerHTML='';
-  renderAll();
+  renderGame();
 }
 
-// ================================================================
+// ============================================================
+// SKIP
+// ============================================================
+function skipTurn(){
+  if(!gameState||gameState.turn!==myRole)return;
+  lPhase='idle';lQ=null;lTile=null;lStealAvail=false;
+  const updated={...gameState,turn:opp(myRole),msg:'Turn skipped.'};
+  checkForced(updated);gameState=updated;saveState(updated);
+  document.getElementById('qtext').textContent='Press NEXT Q when ready!';
+  document.getElementById('answers').innerHTML='';
+  renderGame();
+}
+
+// ============================================================
 // SET DETECTION
-// ================================================================
-function checkForSetsInState(gs,player){
+// ============================================================
+function checkSets(s,player){
   const bycat={};
-  const grid=gs.grid||[];
-  for(let i=0;i<GRID_SIZE;i++){
-    const g=grid[i];
-    if(g&&g!==0&&g.player===player&&!g.locked){
-      const cat=getTileCat(g.tileId);
-      if(!bycat[cat]) bycat[cat]=[];
-      bycat[cat].push(i);
-    }
+  for(let i=0;i<GS;i++){
+    const g=s.grid[i];
+    if(g&&g.player===player&&!g.locked){const c=getTileCat(g.tileId);(bycat[c]=bycat[c]||[]).push(i);}
   }
   for(const cat in bycat){
-    const positions=bycat[cat];
-    if(positions.length<4) continue;
-    for(const combo of combos4(positions)){
-      if(isValidShape(combo)){lockSetInState(gs,combo,player,cat);return;}
+    if(bycat[cat].length<4)continue;
+    for(const combo of combos4(bycat[cat])){
+      if(validShape(combo)){lockSet(s,combo,player,cat);return;}
     }
   }
 }
 
-function lockSetInState(gs,cells,player,cat){
-  const cd=ALL_CATEGORIES[cat];
-  const grid=[...gs.grid];
-  for(const i of cells){grid[i]={...grid[i],locked:true,cat};}
-  for(let i=0;i<GRID_SIZE;i++){
-    const g=grid[i];
-    if(g&&g!==0&&!g.locked&&getTileCat(g.tileId)===cat) grid[i]=0;
-  }
-  for(const p of ['red','blue'])
-    gs.hand[p]=(gs.hand[p]||[]).filter(tid=>getTileCat(tid)!==cat);
-  gs.activeCats=(gs.activeCats||[]).filter(c=>c!==cat);
-  let newCatLabel=null;
-  if((gs.catQueue||[]).length>0){
-    const next=gs.catQueue[0];
-    gs.catQueue=gs.catQueue.slice(1);
-    gs.activeCats=[...gs.activeCats,next];
-    newCatLabel=ALL_CATEGORIES[next].label;
+function lockSet(s,cells,player,cat){
+  const cd=ALL_CATS[cat];
+  const grid=[...s.grid];
+  for(const i of cells)grid[i]={...grid[i],locked:true,cat};
+  for(let i=0;i<GS;i++){if(grid[i]&&!grid[i].locked&&getTileCat(grid[i].tileId)===cat)grid[i]=null;}
+  const filterCat=arr=>arr.filter(id=>getTileCat(id)!==cat);
+  s.handRed=filterCat(s.handRed);s.handBlue=filterCat(s.handBlue);
+  s.activeCats=s.activeCats.filter(c=>c!==cat);
+  let newCat=null;
+  if(s.catQueue.length){newCat=s.catQueue[0];s.catQueue=s.catQueue.slice(1);s.activeCats=[...s.activeCats,newCat];}
+  s.scores={...s.scores,[player]:(s.scores[player]||0)+1};
+  s.grid=grid;
+  s.msg=cd.label+' SET LOCKED! '+(player==='red'?'P1':'P2')+' scores!'+(newCat?' New category: '+ALL_CATS[newCat].label+'!':'');
+  if(s.scores[player]>=2){s.gameOver=true;return;}
+  if(newCat){
     setTimeout(()=>{
-      const banner=document.getElementById('new-cat-banner');
-      const ncd=ALL_CATEGORIES[next];
-      banner.textContent='NEW: '+newCatLabel.toUpperCase()+'!';
-      banner.style.display='block'; banner.style.background=ncd.color;
-      banner.style.border='1px solid '+ncd.border; banner.style.color='white';
-      setTimeout(()=>{banner.style.display='none';},4000);
+      const b=document.getElementById('new-cat');const ncd=ALL_CATS[newCat];
+      b.textContent='NEW: '+ncd.label.toUpperCase()+'!';b.style.display='block';
+      b.style.background=ncd.color;b.style.border='1px solid '+ncd.border;b.style.color='white';
+      setTimeout(()=>b.style.display='none',4000);
     },100);
   }
-  gs.scores={...gs.scores,[player]:(gs.scores[player]||0)+1};
-  gs.grid=grid;
-  gs.statusMsg=cd.label+' LOCKED! '+(player==='red'?'P1':'P2')+' scores!'+(newCatLabel?' NEW: '+newCatLabel+'!':'');
-  if(gs.scores[player]>=2){gs.gameOver=true;return;}
-  updateForcedStealMode(gs);
+  checkForced(s);
 }
 
-function updateForcedStealMode(gs){
-  if(gs.gameOver) return;
-  const grid=gs.grid||[];
-  if(!boardHasRoomForSet(grid)){
-    if(!boardHasRoomWithSteal(grid)){endGameInState(gs,'No more moves');return;}
-    if(!gs.forcedStealMode){
-      gs.forcedStealMode=true;
-      gs.statusMsg='Board full! STEAL PHASE only.';
-    }
-  } else {
-    if(gs.forcedStealMode){
-      gs.forcedStealMode=false;
-      gs.statusMsg='Space opened — normal play resumes!';
-    }
-  }
+function checkForced(s){
+  if(s.gameOver)return;
+  if(!roomForSet(s.grid)){
+    if(!roomWithSteal(s.grid)){endGame(s,'No more moves!');return;}
+    if(!s.forced){s.forced=true;s.msg='Board full — STEAL PHASE only!';}
+  } else if(s.forced){s.forced=false;s.msg='Space opened — normal play!';}
 }
 
-function endGameInState(gs,reason){
-  gs.gameOver=true;
-  const rs=gs.scores.red||0, bs=gs.scores.blue||0;
-  gs.statusMsg=reason||'Game over';
-  if(rs>=2) gs.statusMsg+=' — P1 WINS!';
-  else if(bs>=2) gs.statusMsg+=' — P2 WINS!';
-  else gs.statusMsg+=" — It's a draw!";
+function endGame(s,reason){
+  s.gameOver=true;const r=s.scores.red||0,b=s.scores.blue||0;
+  s.msg=reason+(r>=2?' P1 WINS!':b>=2?' P2 WINS!':" It's a draw!");
 }
 
-// ================================================================
-// SKIP
-// ================================================================
-function skipTurn(){
-  if(!gameState||gameState.turn!==myRole) return;
-  localAnswered=false; localCurrentQ=null; localSelectedTile=null;
-  localStealAvailable=false; localPhase='question';
-  const updated={...gameState, turn:opp(myRole), statusMsg:'Turn skipped.'};
-  updateForcedStealMode(updated);
-  gameState=updated;
-  saveState(updated);
-  document.getElementById('question-text').textContent='Press NEXT Q when ready!';
-  document.getElementById('answers').innerHTML='';
-  renderAll();
+// ============================================================
+// END SCREEN
+// ============================================================
+function showEndScreen(s){
+  const r=s.scores.red||0,b=s.scores.blue||0;
+  document.getElementById('end-title').textContent=r>=2?'🔴 P1 WINS!':b>=2?'🔵 P2 WINS!':r===b?"🤝 DRAW!":r>b?'🔴 P1 WINS!':'🔵 P2 WINS!';
+  document.getElementById('end-msg').textContent=s.msg||'';
+  document.getElementById('end-scores').innerHTML=`<span style="color:var(--red)">P1: ${r} sets</span> &nbsp;·&nbsp; <span style="color:var(--blue)">P2: ${b} sets</span>`;
+  document.getElementById('end').classList.add('show');
 }
 
-// ================================================================
-// END / WAITING
-// ================================================================
-function showWaiting(msg){
-  document.getElementById('waiting-msg').textContent='WAITING FOR OPPONENT';
-  document.getElementById('waiting-code').textContent=currentRoomCode||'';
-  document.getElementById('waiting-overlay').classList.add('show');
-}
-function hideWaiting(){ document.getElementById('waiting-overlay').classList.remove('show'); }
-
-function showEndScreen(gs){
-  const rs=gs.scores.red||0, bs=gs.scores.blue||0;
-  let winMsg;
-  if(rs>=2) winMsg='🔴 PLAYER 1 WINS!';
-  else if(bs>=2) winMsg='🔵 PLAYER 2 WINS!';
-  else if(rs===1&&bs===1) winMsg="🤝 IT'S A DRAW!";
-  else winMsg=rs>bs?'🔴 PLAYER 1 WINS!':'🔵 PLAYER 2 WINS!';
-  document.getElementById('end-title').textContent=winMsg;
-  document.getElementById('end-msg').textContent=gs.statusMsg||'';
-  document.getElementById('end-scores').innerHTML=
-    `<span style="color:var(--red)">P1: ${rs} set${rs!==1?'s':''}</span> &nbsp;·&nbsp; <span style="color:var(--blue)">P2: ${bs} set${bs!==1?'s':''}`;
-  document.getElementById('end-overlay').classList.add('show');
-}
-
-// Expose onclick handlers
-window.joinAs=joinAs; window.resetGame=resetGame; window.leaveRoom=leaveRoom;
-window.createRoom=createRoom; window.joinRoom=joinRoom;
+// ============================================================
+// WIRE UP onclick handlers and init
+// ============================================================
+window.goHome=goHome; window.goCreate=goCreate; window.goJoin=goJoin; window.doJoin=doJoin;
+window.pickRole=function(r){
+  // Works from both create and join role screens
+  pickRole(r).catch(e=>dbg('pickRole error: '+e.message));
+};
 window.nextQuestion=nextQuestion; window.activateSteal=activateSteal;
 window.enterPlaceMode=enterPlaceMode; window.skipTurn=skipTurn;
+
+// Override pickRole for join screen
+document.getElementById('role-red').onclick=()=>pickRoleJoin('red');
+document.getElementById('role-blue').onclick=()=>pickRoleJoin('blue');
+
+// Init Firebase and start create room if on create screen
+initFirebase();
+if(db){
+  // Auto-generate room when Create Game is clicked
+  const origGoCreate=goCreate;
+  window.goCreate=async function(){
+    if(!db){showHomeError('Firebase not connected');return;}
+    showScreen('s-create');
+    await createRoom();
+  };
+}
 
 </script>
 </body>
