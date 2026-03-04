@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Firebase Test</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+body{font-family:monospace;background:#111;color:#0f0;padding:20px;font-size:14px;}
+button{font-size:16px;padding:10px 20px;margin:5px;cursor:pointer;}
+#log{background:#000;padding:10px;margin-top:10px;min-height:200px;white-space:pre-wrap;}
+</style>
+</head>
+<body>
+<h2>Firebase Connection Test</h2>
+<button onclick="testWrite()">1. Write test value</button>
+<button onclick="testRead()">2. Read test value</button>
+<button onclick="testListen()">3. Start listening</button>
+<div id="log">Waiting...\n</div>
+
+<script>
+// PASTE YOUR CONFIG HERE
+const FIREBASE_CONFIG = {
+ apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
+  authDomain: "battle-grid-7fa4f.firebaseapp.com",
+  databaseURL: "https://battle-grid-7fa4f-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "battle-grid-7fa4f",
+  storageBucket: "battle-grid-7fa4f.firebasestorage.app",
+  messagingSenderId: "775436519324",
+  appId: "1:775436519324:web:34a3f1aa6b29882c9baa59",
+  measurementId: "G-8Q88LCZ2W1"
+};
+
+function log(msg){
+  document.getElementById('log').textContent += new Date().toLocaleTimeString()+': '+msg+'\n';
+}
+
+let db;
+try {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  db = firebase.database();
+  log('Firebase init OK');
+} catch(e) {
+  log('INIT ERROR: '+e.message);
+}
+
+function testWrite(){
+  if(!db){ log('No db!'); return; }
+  db.ref('test/ping').set({time: Date.now(), msg:'hello'})
+    .then(()=>log('Write OK'))
+    .catch(e=>log('Write FAILED: '+e.message));
+}
+
+function testRead(){
+  if(!db){ log('No db!'); return; }
+  db.ref('test/ping').get()
+    .then(snap=>log('Read OK: '+JSON.stringify(snap.val())))
+    .catch(e=>log('Read FAILED: '+e.message));
+}
+
+function testListen(){
+  if(!db){ log('No db!'); return; }
+  db.ref('test/ping').on('value', snap=>{
+    log('LIVE UPDATE: '+JSON.stringify(snap.val()));
+  });
+  log('Listener started - now click Write on another tab/device');
+}
+</script>
+</body>
+</html>
