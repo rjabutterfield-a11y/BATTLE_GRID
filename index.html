@@ -254,14 +254,13 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
 // CONFIG — replace YOUR_* values with your Firebase config
 // ============================================================
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
-  authDomain: "battle-grid-7fa4f.firebaseapp.com",
-  databaseURL: "https://battle-grid-7fa4f-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "battle-grid-7fa4f",
-  storageBucket: "battle-grid-7fa4f.firebasestorage.app",
-  messagingSenderId: "775436519324",
-  appId: "1:775436519324:web:34a3f1aa6b29882c9baa59",
-  measurementId: "G-8Q88LCZ2W1"
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL:       "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
 };
 // ============================================================
 
@@ -540,21 +539,7 @@ async function createRoom(){
   dbg('Room created: '+code);
 }
 
-// Called from Create screen (role buttons)
-async function pickRole(role){
-  if(!roomCode||!gameState)return;
-  if(role==='red'&&gameState.redJoined){alert('P1 already taken');return;}
-  if(role==='blue'&&gameState.blueJoined){alert('P2 already taken');return;}
-  myRole=role;
-  gameState[role==='red'?'redJoined':'blueJoined']=true;
-  if(gameState.redJoined&&gameState.blueJoined){
-    gameState.started=true;
-    gameState.msg='Game on! Red goes first.';
-  }
-  await saveState(gameState);
-  dbg('Picked role: '+role+' started='+gameState.started);
-  transitionToGame();
-}
+// pickRole replaced by chooseRole
 
 // ============================================================
 // JOIN ROOM
@@ -580,21 +565,7 @@ async function doJoin(){
   showScreen('s-role');
 }
 
-// Called from Role screen
-async function pickRoleJoin(role){
-  if(!roomCode||!gameState)return;
-  if(role==='red'&&gameState.redJoined){alert('P1 already taken');return;}
-  if(role==='blue'&&gameState.blueJoined){alert('P2 already taken');return;}
-  myRole=role;
-  gameState[role==='red'?'redJoined':'blueJoined']=true;
-  if(gameState.redJoined&&gameState.blueJoined){
-    gameState.started=true;
-    gameState.msg='Game on! Red goes first.';
-  }
-  await saveState(gameState);
-  dbg('Join picked role: '+role+' started='+gameState.started);
-  transitionToGame();
-}
+// pickRoleJoin replaced by chooseRole
 
 // ============================================================
 // TRANSITION TO GAME
@@ -1067,31 +1038,50 @@ function showEndScreen(s){
 }
 
 // ============================================================
-// WIRE UP onclick handlers and init
+// SINGLE pickRole — works from both create and join screens
 // ============================================================
-window.goHome=goHome; window.goCreate=goCreate; window.goJoin=goJoin; window.doJoin=doJoin;
-window.pickRole=function(r){
-  // Works from both create and join role screens
-  pickRole(r).catch(e=>dbg('pickRole error: '+e.message));
-};
-window.nextQuestion=nextQuestion; window.activateSteal=activateSteal;
-window.enterPlaceMode=enterPlaceMode; window.skipTurn=skipTurn;
-
-// Override pickRole for join screen
-document.getElementById('role-red').onclick=()=>pickRoleJoin('red');
-document.getElementById('role-blue').onclick=()=>pickRoleJoin('blue');
-
-// Init Firebase and start create room if on create screen
-initFirebase();
-if(db){
-  // Auto-generate room when Create Game is clicked
-  const origGoCreate=goCreate;
-  window.goCreate=async function(){
-    if(!db){showHomeError('Firebase not connected');return;}
-    showScreen('s-create');
-    await createRoom();
-  };
+async function chooseRole(role){
+  dbg('chooseRole: '+role+' roomCode='+roomCode+' gameState='+!!gameState);
+  if(!roomCode||!gameState){dbg('ERROR: no roomCode or gameState');return;}
+  if(role==='red'&&gameState.redJoined){alert('P1 already taken');return;}
+  if(role==='blue'&&gameState.blueJoined){alert('P2 already taken');return;}
+  myRole=role;
+  gameState[role==='red'?'redJoined':'blueJoined']=true;
+  if(gameState.redJoined&&gameState.blueJoined){
+    gameState.started=true;
+    gameState.msg='Game on! Red goes first.';
+  }
+  dbg('Saving: redJoined='+gameState.redJoined+' blueJoined='+gameState.blueJoined+' started='+gameState.started);
+  await saveState(gameState);
+  transitionToGame();
 }
+
+// ============================================================
+// WIRE UP — all onclick handlers
+// ============================================================
+window.goHome=goHome;
+window.goJoin=goJoin;
+window.doJoin=doJoin;
+window.nextQuestion=nextQuestion;
+window.activateSteal=activateSteal;
+window.enterPlaceMode=enterPlaceMode;
+window.skipTurn=skipTurn;
+
+// Create Game button
+window.goCreate=async function(){
+  if(!db){showHomeError('Firebase not connected — check your config');return;}
+  showScreen('s-create');
+  await createRoom();
+};
+
+// Role buttons — all four point to the same function
+document.getElementById('create-red').onclick=()=>chooseRole('red');
+document.getElementById('create-blue').onclick=()=>chooseRole('blue');
+document.getElementById('role-red').onclick=()=>chooseRole('red');
+document.getElementById('role-blue').onclick=()=>chooseRole('blue');
+
+// Init
+initFirebase();
 
 </script>
 </body>
