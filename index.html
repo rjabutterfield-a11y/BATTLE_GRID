@@ -969,9 +969,19 @@ function selectAnswer(idx){
     gameState=updated;
     saveState(updated);
   } else {
-    const updated={...s,msg:'❌ Wrong! The answer was: '+lQ.choices[lQ.answerIdx]};
+    // Wrong answer — show result briefly then auto-switch turn after 2 seconds
+    const wrongAnswer=lQ.choices[lQ.answerIdx];
+    const updated={...s,turn:opp(myRole),msg:'❌ '+myRole.toUpperCase()+' got it wrong! Answer: '+wrongAnswer+" — "+opp(myRole).toUpperCase()+"'s turn!",currentQ:null};
+    checkForced(updated);
     gameState=updated;
     saveState(updated);
+    lPhase='idle'; lQ=null; lTile=null; lStealAvail=false;
+    // Brief delay so wrong answer highlight is visible before UI resets
+    setTimeout(()=>{
+      document.getElementById('qtext').textContent='Press NEXT Q when ready!';
+      document.getElementById('answers').innerHTML='';
+      renderGame();
+    }, 2000);
   }
   renderGame();
 }
