@@ -48,11 +48,16 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
 .player-panel.blue.myturn{box-shadow:0 0 18px rgba(0,136,255,0.5);border-color:var(--blue);}
 .player-panel.mine{outline:2px solid rgba(255,204,0,0.35);outline-offset:2px;}
 .pname{font-family:'Bebas Neue';font-size:0.9rem;}
-.pscore{font-family:'Bebas Neue';font-size:2rem;line-height:1;}
+.pscore{font-family:'Bebas Neue';font-size:1.1rem;line-height:1;}
 .player-panel.red .pscore{color:var(--red);}
 .player-panel.blue .pscore{color:var(--blue);}
+.pmoney{font-family:'Bebas Neue';font-size:1.8rem;font-weight:900;line-height:1.1;color:#ffdd44;text-shadow:0 0 12px rgba(255,220,0,0.7);}
 .ptiles{font-family:'Share Tech Mono';font-size:0.6rem;color:rgba(200,220,255,0.4);}
 .vs{font-family:'Bebas Neue';font-size:1.2rem;color:rgba(200,220,255,0.25);}
+@keyframes money-pop{0%{transform:translateY(0) scale(1);opacity:1;}50%{transform:translateY(-50px) scale(1.5);opacity:1;}100%{transform:translateY(-90px) scale(0.8);opacity:0;}}
+@keyframes steal-flash{0%,100%{background:rgba(255,34,68,0);}35%{background:rgba(255,34,68,0.3);}70%{background:rgba(255,34,68,0.1);}}
+.money-pop{position:fixed;font-family:'Bebas Neue';font-size:2.4rem;pointer-events:none;z-index:9000;animation:money-pop 1.5s ease-out forwards;}
+.steal-flash-overlay{position:fixed;inset:0;pointer-events:none;z-index:8999;animation:steal-flash 0.8s ease-out forwards;}
 #cat-bar{display:flex;gap:6px;flex-wrap:wrap;padding:3px 0;align-items:center;min-height:32px;}
 .cat-pill{padding:3px 10px;border-radius:20px;border:1px solid;font-family:'Rajdhani';font-size:0.75rem;font-weight:600;display:flex;align-items:center;gap:5px;}
 .cat-next{font-family:'Share Tech Mono';font-size:0.65rem;color:rgba(200,220,255,0.3);padding:2px 6px;}
@@ -189,11 +194,17 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
   <div id="scorebar">
     <div class="player-panel red" id="panel-red">
       <div><div class="pname">🔴 P1</div><div class="ptiles" id="red-tiles">0 tiles</div></div>
-      <div><div class="pscore" id="red-score">0</div><div style="font-family:'Share Tech Mono';font-size:0.55rem;color:rgba(255,100,120,0.5)">SETS</div></div>
+      <div style="text-align:right">
+        <div class="pmoney" id="red-money">£0</div>
+        <div class="pscore" id="red-score" style="font-size:1rem">0 <span style="font-size:0.5rem;opacity:0.5">SETS</span></div>
+      </div>
     </div>
     <div class="vs">VS</div>
     <div class="player-panel blue" id="panel-blue">
-      <div><div class="pscore" id="blue-score">0</div><div style="font-family:'Share Tech Mono';font-size:0.55rem;color:rgba(100,180,255,0.5)">SETS</div></div>
+      <div style="text-align:left">
+        <div class="pmoney" id="blue-money">£0</div>
+        <div class="pscore" id="blue-score" style="font-size:1rem">0 <span style="font-size:0.5rem;opacity:0.5">SETS</span></div>
+      </div>
       <div><div class="pname">P2 🔵</div><div class="ptiles" id="blue-tiles">0 tiles</div></div>
     </div>
   </div>
@@ -430,6 +441,7 @@ function makeState(code){
     redJoined:false, blueJoined:false, started:false,
     turn:'red',
     scores:{red:0,blue:0},
+    money:{red:0,blue:0},
     handRed:[], handBlue:[],
     grid:Array(GS).fill(null),
     usedQ:[],
@@ -448,6 +460,9 @@ function fixState(s){
   if(!s.scores)s.scores={red:0,blue:0};
   s.scores.red=s.scores.red||0;
   s.scores.blue=s.scores.blue||0;
+  if(!s.money)s.money={red:0,blue:0};
+  s.money.red=s.money.red||0;
+  s.money.blue=s.money.blue||0;
   if(!s.handRed||!Array.isArray(s.handRed))s.handRed=s.handRed?Object.values(s.handRed):[];
   if(!s.handBlue||!Array.isArray(s.handBlue))s.handBlue=s.handBlue?Object.values(s.handBlue):[];
   if(!s.usedQ||!Array.isArray(s.usedQ))s.usedQ=s.usedQ?Object.values(s.usedQ):[];
@@ -647,8 +662,10 @@ function renderGame(){
   document.getElementById('role-badge').style.color=myRole==='red'?'var(--red)':'var(--blue)';
 
   // Scores
-  document.getElementById('red-score').textContent=s.scores.red;
-  document.getElementById('blue-score').textContent=s.scores.blue;
+  document.getElementById('red-score').innerHTML=s.scores.red+' <span style="font-size:0.5rem;opacity:0.5">SETS</span>';
+  document.getElementById('blue-score').innerHTML=s.scores.blue+' <span style="font-size:0.5rem;opacity:0.5">SETS</span>';
+  document.getElementById('red-money').textContent='£'+(s.money.red||0).toLocaleString();
+  document.getElementById('blue-money').textContent='£'+(s.money.blue||0).toLocaleString();
   document.getElementById('red-tiles').textContent=s.handRed.length+' tile'+(s.handRed.length!==1?'s':'');
   document.getElementById('blue-tiles').textContent=s.handBlue.length+' tile'+(s.handBlue.length!==1?'s':'');
   document.getElementById('panel-red').className='player-panel red'+(s.turn==='red'?' myturn':'')+(myRole==='red'?' mine':'');
@@ -845,6 +862,78 @@ function renderOpponentQuestion(q){
   });
 }
 
+// ── SOUNDS (Web Audio API — no files needed) ──
+function playSound(type){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    if(type==='money'){
+      // Bright cash-register chime
+      [523,659,784,1047].forEach((freq,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);
+        o.type='sine';o.frequency.value=freq;
+        g.gain.setValueAtTime(0,ctx.currentTime+i*0.08);
+        g.gain.linearRampToValueAtTime(0.35,ctx.currentTime+i*0.08+0.02);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.08+0.3);
+        o.start(ctx.currentTime+i*0.08);
+        o.stop(ctx.currentTime+i*0.08+0.35);
+      });
+    } else if(type==='steal'){
+      // Dramatic descending whoosh + low thud
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sawtooth';
+      o.frequency.setValueAtTime(600,ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(80,ctx.currentTime+0.4);
+      g.gain.setValueAtTime(0.4,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.5);
+      o.start(ctx.currentTime);o.stop(ctx.currentTime+0.5);
+      // thud
+      const o2=ctx.createOscillator(),g2=ctx.createGain();
+      o2.connect(g2);g2.connect(ctx.destination);
+      o2.type='sine';o2.frequency.setValueAtTime(120,ctx.currentTime+0.25);
+      o2.frequency.exponentialRampToValueAtTime(40,ctx.currentTime+0.55);
+      g2.gain.setValueAtTime(0.5,ctx.currentTime+0.25);
+      g2.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.6);
+      o2.start(ctx.currentTime+0.25);o2.stop(ctx.currentTime+0.65);
+    } else if(type==='set'){
+      // Triumphant fanfare
+      [392,494,587,784,988].forEach((freq,i)=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);
+        o.type='square';o.frequency.value=freq;
+        g.gain.setValueAtTime(0,ctx.currentTime+i*0.1);
+        g.gain.linearRampToValueAtTime(0.2,ctx.currentTime+i*0.1+0.03);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.1+0.4);
+        o.start(ctx.currentTime+i*0.1);
+        o.stop(ctx.currentTime+i*0.1+0.45);
+      });
+    }
+    setTimeout(()=>ctx.close(),2000);
+  }catch(e){console.log('Audio error:',e);}
+}
+
+function popMoney(amount,color,anchorId){
+  const anchor=document.getElementById(anchorId);
+  if(!anchor)return;
+  const rect=anchor.getBoundingClientRect();
+  const el=document.createElement('div');
+  el.className='money-pop';
+  el.textContent=(amount>0?'+':'')+'£'+Math.abs(amount).toLocaleString();
+  el.style.color=amount>=0?'#ffdd44':'#ff4466';
+  el.style.left=(rect.left+rect.width/2-30)+'px';
+  el.style.top=(rect.top-10)+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1700);
+}
+
+function flashSteal(){
+  const el=document.createElement('div');
+  el.className='steal-flash-overlay';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),900);
+}
+
 function selectAnswer(idx){
   if(!lQ||lPhase!=='question'||!gameState||gameState.turn!==myRole)return;
   const correct=idx===lQ.answerIdx;
@@ -864,13 +953,17 @@ function selectAnswer(idx){
     lStealAvail=oppBoard;
     const updated={...s};
     if(myRole==='red')updated.handRed=myHand; else updated.handBlue=myHand;
+    // +£100 for winning a tile
+    updated.money={...s.money,[myRole]:(s.money[myRole]||0)+100};
+    playSound('money');
+    popMoney(100,myRole,myRole==='red'?'red-money':'blue-money');
     if(oppBoard){
-      updated.msg='✅ CORRECT! '+tile.l+' earned — ⚡ STEAL is your only option!';
+      updated.msg='✅ CORRECT! '+tile.l+' earned (+£100) — ⚡ STEAL is your only option!';
     } else if(hasEmpty){
       lPhase='place'; lTile=lQ.tileId;
-      updated.msg='✅ CORRECT! '+tile.l+' earned — place it on the grid';
+      updated.msg='✅ CORRECT! '+tile.l+' earned (+£100) — place it on the grid';
     } else {
-      updated.msg='✅ CORRECT! '+tile.l+' earned';
+      updated.msg='✅ CORRECT! '+tile.l+' earned (+£100)';
     }
     gameState=updated;
     saveState(updated);
@@ -967,8 +1060,18 @@ function attemptSteal(idx){
   const myHand=myRole==='red'?[...s.handRed,...[stolenId]]:[...s.handBlue,...[stolenId]];
   const updated={...s};
   if(myRole==='red')updated.handRed=myHand; else updated.handBlue=myHand;
+  // Steal: take £100 from opponent, add £100 to self
+  const oppRole=opp(myRole);
+  updated.money={...s.money,
+    [myRole]:(s.money[myRole]||0)+100,
+    [oppRole]:Math.max(0,(s.money[oppRole]||0)-100)
+  };
   updated.grid=newGrid;updated.lastStolen=stolenId;
-  updated.msg='⚡ '+t.l+' STOLEN! Now place it.';
+  updated.msg='⚡ '+t.l+' STOLEN! (+£100, opponent loses £100). Now place it.';
+  playSound('steal');
+  flashSteal();
+  popMoney(100,myRole,myRole==='red'?'red-money':'blue-money');
+  popMoney(-100,oppRole,oppRole==='red'?'red-money':'blue-money');
   gameState=updated;saveState(updated);renderGame();
 }
 
@@ -1023,8 +1126,10 @@ function lockSet(s,cells,player,cat){
   let newCat=null;
   if(s.catQueue.length){newCat=s.catQueue[0];s.catQueue=s.catQueue.slice(1);s.activeCats=[...s.activeCats,newCat];}
   s.scores={...s.scores,[player]:(s.scores[player]||0)+1};
+  s.money={...s.money,[player]:(s.money[player]||0)+500};
   s.grid=grid;
-  s.msg=cd.label+' SET LOCKED! '+(player==='red'?'P1':'P2')+' scores!'+(newCat?' New category: '+ALL_CATS[newCat].label+'!':'');
+  s.msg=cd.label+' SET LOCKED! (+£500) '+(player==='red'?'P1':'P2')+' scores!'+(newCat?' New category: '+ALL_CATS[newCat].label+'!':'');
+  if(player===myRole){playSound('set');popMoney(500,player,player==='red'?'red-money':'blue-money');}
   if(s.scores[player]>=2){s.gameOver=true;return;}
   if(newCat){
     setTimeout(()=>{
@@ -1047,7 +1152,14 @@ function checkForced(s){
 
 function endGame(s,reason){
   s.gameOver=true;const r=s.scores.red||0,b=s.scores.blue||0;
-  s.msg=reason+(r>=2?' P1 WINS!':b>=2?' P2 WINS!':" It's a draw!");
+  const rm=s.money?s.money.red||0:0,bm=s.money?s.money.blue||0:0;
+  let winner;
+  if(r>=2)winner='🔴 P1 WINS!';
+  else if(b>=2)winner='🔵 P2 WINS!';
+  else if(rm>bm)winner='🔴 P1 WINS on money!';
+  else if(bm>rm)winner='🔵 P2 WINS on money!';
+  else winner="🤝 It's a draw!";
+  s.msg=reason+' '+winner;
 }
 
 // ============================================================
@@ -1057,7 +1169,10 @@ function showEndScreen(s){
   const r=s.scores.red||0,b=s.scores.blue||0;
   document.getElementById('end-title').textContent=r>=2?'🔴 P1 WINS!':b>=2?'🔵 P2 WINS!':r===b?"🤝 DRAW!":r>b?'🔴 P1 WINS!':'🔵 P2 WINS!';
   document.getElementById('end-msg').textContent=s.msg||'';
-  document.getElementById('end-scores').innerHTML=`<span style="color:var(--red)">P1: ${r} sets</span> &nbsp;·&nbsp; <span style="color:var(--blue)">P2: ${b} sets</span>`;
+  const rm=s.money?s.money.red||0:0, bm=s.money?s.money.blue||0:0;
+  document.getElementById('end-scores').innerHTML=
+    `<div style="margin-bottom:8px"><span style="color:var(--red)">P1: ${r} sets</span> &nbsp;·&nbsp; <span style="color:var(--blue)">P2: ${b} sets</span></div>`+
+    `<div style="font-family:'Bebas Neue';font-size:1.6rem"><span style="color:#ffdd44">P1 £${rm.toLocaleString()}</span> &nbsp;vs&nbsp; <span style="color:#ffdd44">P2 £${bm.toLocaleString()}</span></div>`;
   document.getElementById('end').classList.add('show');
 }
 
