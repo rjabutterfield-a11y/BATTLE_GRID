@@ -434,6 +434,7 @@ function makeState(code){
     catQueue:CAT_KEYS.slice(2),
     forced:false,
     lastStolen:null,
+    lastPlaced:null,
     gameOver:false,
     msg:'Waiting for players...'
   };
@@ -462,6 +463,7 @@ function fixState(s){
   }
   s.redJoined=!!s.redJoined; s.blueJoined=!!s.blueJoined; s.started=!!s.started;
   s.forced=!!s.forced; s.gameOver=!!s.gameOver;
+  if(!s.lastPlaced)s.lastPlaced=null;
   return s;
 }
 
@@ -794,45 +796,58 @@ function renderControls(s,isMyTurn,myHand){
 // ============================================================
 // QUESTIONS
 // ============================================================
-function getEligible(s){
-  // myPlaced = tiles I've already placed on the board (can't win them again from a question)
-  const myOnBoard=new Set(s.grid.filter(g=>g&&g.player===myRole&&!g.locked).map(g=>g.tileId));
-  // oppOnBoard = opponent's unlocked tiles (stealable)
-  const oppOnBoard=new Set(s.grid.filter(g=>g&&g.player===opp(myRole)&&!g.locked).map(g=>g.tileId));
-  // myHand = tiles already in my hand (already won but not placed)
-  const myHand=new Set(myRole==='red'?s.handRed:s.handBlue);
+// QUESTION ELIGIBILITY
+// Rules:
+//  1. Not already used
+//  2. Category must be active
+//  3. Tile answer must exist
+//  4. Never re-ask about the tile just placed or stolen (lastPlaced / lastStolen)
+//  5. Can't win a tile already in my hand
+//  6. Can't win a tile I have on the board unless I could steal it back from opponent too
+//  7. Normal mode: question must either let me place a new tile OR steal from opponent
+//     (i.e. the answer tile must be either free to place somewhere, or stealable)
+//  8. Forced steal mode: question must directly enable a steal (opp has that tile unlocked)
+// ============================================================
+
+function boardHasSpaceFor(s, tileId, role){
+  // Would winning this tile give me something useful to place?
+  // Yes if: there's an empty cell on the board
+  const hasEmpty = s.grid.some(g => !g);
+  if(hasEmpty) return true;
+  // Or if I could steal an opponent tile (freeing a space) — but that's handled separately
+  return false;
+}
+
+function getEligibleFor(s, role){
+  const myOnBoard = new Set(s.grid.filter(g=>g&&g.player===role&&!g.locked).map(g=>g.tileId));
+  const oppOnBoard = new Set(s.grid.filter(g=>g&&g.player===opp(role)&&!g.locked).map(g=>g.tileId));
+  const myHand    = new Set(role==='red'?s.handRed:s.handBlue);
+  const hasEmpty  = s.grid.some(g=>!g);
 
   return QUESTIONS.map((q,i)=>({q,i})).filter(({q,i})=>{
-    if(s.usedQ.includes(i))return false;
-    if(!s.activeCats.includes(q.cat))return false;
-    const t=tileByLabel(q.cat,q.a);if(!t)return false;
-    // Can't win a tile I already have in hand
-    if(myHand.has(t.id))return false;
-    // Can't win a tile I already have on the board (unless opponent also has one — steal)
-    if(myOnBoard.has(t.id)&&!oppOnBoard.has(t.id))return false;
-    // lastStolen only blocks for one immediate re-ask
-    if(s.lastStolen===t.id)return false;
-    // In forced steal mode, question must relate to an opponent tile on board
-    if(s.forced&&!oppOnBoard.has(t.id))return false;
-    return true;
+    if(s.usedQ.includes(i))                    return false; // already asked
+    if(!s.activeCats.includes(q.cat))           return false; // cat not active
+    const t=tileByLabel(q.cat,q.a);
+    if(!t)                                      return false; // tile not found
+    if(s.lastStolen===t.id)                     return false; // just stolen — no immediate re-steal
+    if(s.lastPlaced===t.id)                     return false; // just placed — no immediate re-ask
+    if(myHand.has(t.id))                        return false; // already in my hand
+    if(myOnBoard.has(t.id)&&!oppOnBoard.has(t.id)) return false; // already on board, can't steal back
+
+    if(s.forced){
+      // Steal-mode only: question must enable a steal
+      return oppOnBoard.has(t.id);
+    } else {
+      // Normal mode: question must enable EITHER placing a new tile OR stealing from opp
+      const canPlace  = !myOnBoard.has(t.id) && hasEmpty;
+      const canSteal  = oppOnBoard.has(t.id);
+      return canPlace || canSteal;
+    }
   });
 }
 
-// Like getEligible but for a specified role (used to check if other player is also stuck)
-function getEligibleFor(s,role){
-  const onBoard=new Set(s.grid.filter(g=>g&&g.player===role&&!g.locked).map(g=>g.tileId));
-  const oppBoard=new Set(s.grid.filter(g=>g&&g.player===opp(role)&&!g.locked).map(g=>g.tileId));
-  const hand=new Set(role==='red'?s.handRed:s.handBlue);
-  return QUESTIONS.map((q,i)=>({q,i})).filter(({q,i})=>{
-    if(s.usedQ.includes(i))return false;
-    if(!s.activeCats.includes(q.cat))return false;
-    const t=tileByLabel(q.cat,q.a);if(!t)return false;
-    if(hand.has(t.id))return false;
-    if(onBoard.has(t.id)&&!oppBoard.has(t.id))return false;
-    if(s.lastStolen===t.id)return false;
-    if(s.forced&&!oppBoard.has(t.id))return false;
-    return true;
-  });
+function getEligible(s){
+  return getEligibleFor(s, myRole);
 }
 
 function nextQuestion(){
@@ -857,10 +872,12 @@ function nextQuestion(){
       renderGame();return;
     } else {
       // In normal mode, try resetting lastStolen and retry once
-      const sRetry={...s,lastStolen:null};
-      const retryPool=getEligible.call(null,sRetry);
+      // Retry without lastStolen/lastPlaced blocks
+      const sRetry={...s,lastStolen:null,lastPlaced:null};
+      const retryPool=getEligibleFor(sRetry,myRole);
       if(!retryPool.length){endGame(s,'No more questions available!');saveState(s);return;}
-      // Use retry pool
+      // Unblock and retry
+      gameState=sRetry;
       return nextQuestion();
     }
   }
@@ -1066,7 +1083,8 @@ function placeTile(idx){
   updated.grid=newGrid;
   updated.msg=(tile?tile.l:'Tile')+' placed!';
   updated.currentQ=null;
-  updated.lastStolen=null;  // clear steal block after placement
+  updated.lastStolen=null;
+  updated.lastPlaced=placedId;  // block immediate re-ask on just-placed tile
   checkSets(updated,myRole);
   if(!updated.gameOver){
     updated.turn=opp(myRole);
@@ -1132,7 +1150,7 @@ function attemptSteal(idx){
 function failSteal(){
   lPhase='idle';lStealTile=null;lQ=null;lStealAvail=false;
   document.getElementById('steal-bar').classList.remove('show');
-  const updated={...gameState,turn:opp(myRole),msg:'Steal failed — '+opp(myRole).toUpperCase()+"'s turn!",currentQ:null};
+  const updated={...gameState,turn:opp(myRole),msg:'Steal failed — '+opp(myRole).toUpperCase()+"'s turn!",currentQ:null,lastPlaced:null};
   checkForced(updated);gameState=updated;saveState(updated);
   document.getElementById('qtext').textContent='Press NEXT Q when ready!';
   document.getElementById('answers').innerHTML='';
@@ -1145,7 +1163,7 @@ function failSteal(){
 function skipTurn(){
   if(!gameState||gameState.turn!==myRole)return;
   lPhase='idle';lQ=null;lTile=null;lStealAvail=false;
-  const updated={...gameState,turn:opp(myRole),msg:'Turn skipped.',currentQ:null};
+  const updated={...gameState,turn:opp(myRole),msg:'Turn skipped.',currentQ:null,lastPlaced:null,lastStolen:null};
   checkForced(updated);gameState=updated;saveState(updated);
   document.getElementById('qtext').textContent='Press NEXT Q when ready!';
   document.getElementById('answers').innerHTML='';
