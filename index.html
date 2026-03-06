@@ -257,7 +257,6 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
   </div>
 </div>
 
-<div id="dbg">starting...</div>
 </div><!-- #app -->
 
 <script>
@@ -381,7 +380,7 @@ function getTile(id){for(const cat of Object.values(ALL_CATS)){const t=cat.tiles
 function getTileCat(id){for(const[k,cat]of Object.entries(ALL_CATS)){if(cat.tiles.find(t=>t.id===id))return k;}return null;}
 function tileByLabel(cat,label){return ALL_CATS[cat]&&ALL_CATS[cat].tiles.find(t=>t.l===label);}
 function opp(r){return r==='red'?'blue':'red';}
-function dbg(msg){document.getElementById('dbg').textContent=new Date().toLocaleTimeString()+' '+msg;console.log('[BG]',msg);}
+function dbg(msg){console.log('[BG]',msg);}
 
 // ============================================================
 // FIREBASE
@@ -614,10 +613,17 @@ function onStateUpdate(s){
   document.getElementById('waiting').classList.remove('show');
   document.getElementById('game-screen').style.display='flex';
 
-  // If it just became our turn, clear question display
-  if(s.turn===myRole && lPhase==='idle'){
-    document.getElementById('qtext').textContent='Press NEXT Q to start your turn!';
-    document.getElementById('answers').innerHTML='';
+  // When it becomes our turn, always reset local state cleanly
+  // This handles cases where lPhase got stuck (e.g. wrong-answer timeout race)
+  if(s.turn===myRole){
+    if(lPhase==='idle'||lPhase==='answered'||lPhase==='question'){
+      // Only reset if we don't have an active question in progress
+      if(!lQ){
+        lPhase='idle';
+        document.getElementById('qtext').textContent='Press NEXT Q to start your turn!';
+        document.getElementById('answers').innerHTML='';
+      }
+    }
   }
 
   // If it is the opponent's turn, show their question (read-only, no answer buttons clickable)
@@ -954,14 +960,16 @@ function selectAnswer(idx){
     gameState=updated;
     saveState(updated);
   } else {
-    // Wrong answer — show result briefly then auto-switch turn after 2 seconds
+    // Wrong answer — clear local state immediately, switch turn, show answer for 2s
     const wrongAnswer=lQ.choices[lQ.answerIdx];
-    const updated={...s,turn:opp(myRole),msg:'❌ '+myRole.toUpperCase()+' got it wrong! Answer: '+wrongAnswer+" — "+opp(myRole).toUpperCase()+"'s turn!",currentQ:null};
+    const wrongMsg='❌ '+myRole.toUpperCase()+' got it wrong! Answer: '+wrongAnswer+" — "+opp(myRole).toUpperCase()+"'s turn!";
+    // Reset local phase BEFORE saving so onStateUpdate sees clean state
+    lPhase='idle'; lQ=null; lTile=null; lStealAvail=false;
+    const updated={...s,turn:opp(myRole),msg:wrongMsg,currentQ:null};
     checkForced(updated);
     gameState=updated;
     saveState(updated);
-    lPhase='idle'; lQ=null; lTile=null; lStealAvail=false;
-    // Brief delay so wrong answer highlight is visible before UI resets
+    // Keep wrong-answer highlights visible briefly, then clear
     setTimeout(()=>{
       document.getElementById('qtext').textContent='Press NEXT Q when ready!';
       document.getElementById('answers').innerHTML='';
