@@ -795,16 +795,42 @@ function renderControls(s,isMyTurn,myHand){
 // QUESTIONS
 // ============================================================
 function getEligible(s){
-  const myHand=myRole==='red'?s.handRed:s.handBlue;
-  const myPlaced=new Set(s.grid.filter(g=>g&&g.player===s.turn).map(g=>g.tileId));
-  const oppOnBoard=new Set(s.grid.filter(g=>g&&g.player===opp(s.turn)&&!g.locked).map(g=>g.tileId));
+  // myPlaced = tiles I've already placed on the board (can't win them again from a question)
+  const myOnBoard=new Set(s.grid.filter(g=>g&&g.player===myRole&&!g.locked).map(g=>g.tileId));
+  // oppOnBoard = opponent's unlocked tiles (stealable)
+  const oppOnBoard=new Set(s.grid.filter(g=>g&&g.player===opp(myRole)&&!g.locked).map(g=>g.tileId));
+  // myHand = tiles already in my hand (already won but not placed)
+  const myHand=new Set(myRole==='red'?s.handRed:s.handBlue);
+
   return QUESTIONS.map((q,i)=>({q,i})).filter(({q,i})=>{
     if(s.usedQ.includes(i))return false;
     if(!s.activeCats.includes(q.cat))return false;
     const t=tileByLabel(q.cat,q.a);if(!t)return false;
-    if(myPlaced.has(t.id))return false;
+    // Can't win a tile I already have in hand
+    if(myHand.has(t.id))return false;
+    // Can't win a tile I already have on the board (unless opponent also has one — steal)
+    if(myOnBoard.has(t.id)&&!oppOnBoard.has(t.id))return false;
+    // lastStolen only blocks for one immediate re-ask
     if(s.lastStolen===t.id)return false;
+    // In forced steal mode, question must relate to an opponent tile on board
     if(s.forced&&!oppOnBoard.has(t.id))return false;
+    return true;
+  });
+}
+
+// Like getEligible but for a specified role (used to check if other player is also stuck)
+function getEligibleFor(s,role){
+  const onBoard=new Set(s.grid.filter(g=>g&&g.player===role&&!g.locked).map(g=>g.tileId));
+  const oppBoard=new Set(s.grid.filter(g=>g&&g.player===opp(role)&&!g.locked).map(g=>g.tileId));
+  const hand=new Set(role==='red'?s.handRed:s.handBlue);
+  return QUESTIONS.map((q,i)=>({q,i})).filter(({q,i})=>{
+    if(s.usedQ.includes(i))return false;
+    if(!s.activeCats.includes(q.cat))return false;
+    const t=tileByLabel(q.cat,q.a);if(!t)return false;
+    if(hand.has(t.id))return false;
+    if(onBoard.has(t.id)&&!oppBoard.has(t.id))return false;
+    if(s.lastStolen===t.id)return false;
+    if(s.forced&&!oppBoard.has(t.id))return false;
     return true;
   });
 }
@@ -814,7 +840,30 @@ function nextQuestion(){
   if(lPhase!=='idle'&&lPhase!=='question')return;
   const s=gameState;
   const pool=getEligible(s);
-  if(!pool.length){endGame(s,'No more questions!');return;}
+  if(!pool.length){
+    // No eligible questions for this player right now
+    if(s.forced){
+      // In steal mode, this player has nothing to steal — pass turn
+      const updated={...s,turn:opp(myRole),lastStolen:null,
+        msg:'No steal options for '+myRole.toUpperCase()+' — passing to '+opp(myRole).toUpperCase()+'!'};
+      checkForced(updated);
+      // Check if OTHER player also has no options — then it really is game over
+      const otherPool=getEligibleFor(updated,opp(myRole));
+      if(!otherPool.length){endGame(updated,'No moves left!');saveState(updated);return;}
+      lPhase='idle';lQ=null;lTile=null;lStealAvail=false;
+      gameState=updated;saveState(updated);
+      document.getElementById('qtext').textContent='No steal options — turn passed!';
+      document.getElementById('answers').innerHTML='';
+      renderGame();return;
+    } else {
+      // In normal mode, try resetting lastStolen and retry once
+      const sRetry={...s,lastStolen:null};
+      const retryPool=getEligible.call(null,sRetry);
+      if(!retryPool.length){endGame(s,'No more questions available!');saveState(s);return;}
+      // Use retry pool
+      return nextQuestion();
+    }
+  }
   const pick=pool[Math.floor(Math.random()*pool.length)];
   const opts=CAT_OPTS[pick.q.cat];
   const others=opts.filter(o=>o!==pick.q.a).sort(()=>Math.random()-0.5).slice(0,3);
@@ -1017,6 +1066,7 @@ function placeTile(idx){
   updated.grid=newGrid;
   updated.msg=(tile?tile.l:'Tile')+' placed!';
   updated.currentQ=null;
+  updated.lastStolen=null;  // clear steal block after placement
   checkSets(updated,myRole);
   if(!updated.gameOver){
     updated.turn=opp(myRole);
