@@ -129,11 +129,10 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
 .endbtn{font-family:'Bebas Neue';letter-spacing:0.15em;font-size:1.2rem;padding:10px 32px;border-radius:7px;border:none;cursor:pointer;background:linear-gradient(135deg,#0066cc,#0099ff);color:white;}
 @keyframes steal-pulse{from{transform:scale(1);}to{transform:scale(1.06);}}
 
-/* DEBUG */
-#dbg{position:fixed;bottom:0;left:0;right:0;background:rgba(0,0,0,0.9);color:#0f0;font-family:monospace;font-size:11px;padding:3px 8px;z-index:9999;}
+
 </style>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
 <body>
 <audio id="lobby-music" src="OXYGENE.mp3" loop preload="auto"></audio>
@@ -265,14 +264,14 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
 // CONFIG — replace YOUR_* values with your Firebase config
 // ============================================================
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
-  authDomain: "battle-grid-7fa4f.firebaseapp.com",
-  databaseURL: "https://battle-grid-7fa4f-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "battle-grid-7fa4f",
-  storageBucket: "battle-grid-7fa4f.firebasestorage.app",
+  apiKey:            "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
+  authDomain:        "battle-grid-7fa4f.firebaseapp.com",
+  databaseURL:       "https://battle-grid-7fa4f-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:         "battle-grid-7fa4f",
+  storageBucket:     "battle-grid-7fa4f.firebasestorage.app",
   messagingSenderId: "775436519324",
-  appId: "1:775436519324:web:34a3f1aa6b29882c9baa59",
-  measurementId: "G-8Q88LCZ2W1"
+  appId:             "1:775436519324:web:34a3f1aa6b29882c9baa59",
+  measurementId:     "G-8Q88LCZ2W1"
 };
 // ============================================================
 
@@ -424,6 +423,18 @@ function initFirebase(){
   if(FIREBASE_CONFIG.apiKey==='YOUR_API_KEY'){
     showHomeError('⚠️ Firebase config not set. Add your values to the FIREBASE_CONFIG block.');
     document.getElementById('home-status').textContent='';
+    return;
+  }
+  if(typeof firebase==='undefined'){
+    // SDK failed to load — retry once after a short delay
+    document.getElementById('home-status').textContent='Loading Firebase...';
+    setTimeout(()=>{
+      if(typeof firebase==='undefined'){
+        showHomeError('⚠️ Firebase SDK failed to load. Check your internet connection or try a hard refresh (Ctrl+Shift+R).');
+      } else {
+        initFirebase();
+      }
+    }, 2000);
     return;
   }
   try{
