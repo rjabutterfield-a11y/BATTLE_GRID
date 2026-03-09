@@ -136,6 +136,7 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
+<audio id="lobby-music" src="OXYGENE.mp3" loop preload="auto"></audio>
 <div id="app">
 
 <!-- SCREEN 1: HOME -->
@@ -264,14 +265,13 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
 // CONFIG — replace YOUR_* values with your Firebase config
 // ============================================================
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCnhYjbHSjRw5hwWDrF6tQqH6OMVWcKfv8",
-  authDomain: "battle-grid-7fa4f.firebaseapp.com",
-  databaseURL: "https://battle-grid-7fa4f-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "battle-grid-7fa4f",
-  storageBucket: "battle-grid-7fa4f.firebasestorage.app",
-  messagingSenderId: "775436519324",
-  appId: "1:775436519324:web:34a3f1aa6b29882c9baa59",
-  measurementId: "G-8Q88LCZ2W1"
+  apiKey:            "YOUR_API_KEY",
+  authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL:       "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+  projectId:         "YOUR_PROJECT_ID",
+  storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId:             "YOUR_APP_ID"
 };
 // ============================================================
 
@@ -388,6 +388,32 @@ function getTileCat(id){for(const[k,cat]of Object.entries(ALL_CATS)){if(cat.tile
 function tileByLabel(cat,label){return ALL_CATS[cat]&&ALL_CATS[cat].tiles.find(t=>t.l===label);}
 function opp(r){return r==='red'?'blue':'red';}
 function dbg(msg){console.log('[BG]',msg);}
+
+// ── LOBBY MUSIC ──
+function startLobbyMusic(){
+  const m=document.getElementById('lobby-music');
+  if(!m||m._playing)return;
+  m.volume=0.55;
+  m.currentTime=0;
+  const p=m.play();
+  if(p!==undefined){
+    p.then(()=>{m._playing=true;}).catch(()=>{
+      // Autoplay blocked — play on next user interaction
+      const unlock=()=>{m.play().then(()=>{m._playing=true;});document.removeEventListener('click',unlock);};
+      document.addEventListener('click',unlock);
+    });
+  }
+}
+function stopLobbyMusic(){
+  const m=document.getElementById('lobby-music');
+  if(!m)return;
+  // Fade out over 1.5 seconds
+  const step=()=>{
+    if(m.volume>0.04){m.volume=Math.max(0,m.volume-0.03);setTimeout(step,50);}
+    else{m.pause();m.volume=0.55;m._playing=false;}
+  };
+  step();
+}
 
 // ============================================================
 // FIREBASE
@@ -518,6 +544,7 @@ function showScreen(id){
 
 function goHome(){
   stopListening();
+  stopLobbyMusic();
   myRole=null; roomCode=null; gameState=null;
   lPhase='idle'; lQ=null; lTile=null; lStealTile=null; lStealAvail=false;
   showScreen('s-home');
@@ -526,11 +553,13 @@ function goHome(){
 function goCreate(){
   if(!db){showHomeError('Firebase not connected');return;}
   showScreen('s-create');
+  startLobbyMusic();
 }
 
 function goJoin(){
   if(!db){showHomeError('Firebase not connected');return;}
   showScreen('s-join');
+  startLobbyMusic();
 }
 
 // ============================================================
@@ -621,6 +650,7 @@ function onStateUpdate(s){
   // Game is live
   document.getElementById('waiting').classList.remove('show');
   document.getElementById('game-screen').style.display='flex';
+  stopLobbyMusic();
 
   // When it becomes our turn, always reset local state cleanly
   // This handles cases where lPhase got stuck (e.g. wrong-answer timeout race)
