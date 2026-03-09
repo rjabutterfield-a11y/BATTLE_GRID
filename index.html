@@ -119,6 +119,21 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
 #statusbar{font-family:'Share Tech Mono';font-size:0.68rem;color:rgba(200,220,255,0.45);text-align:center;padding:4px 0;min-height:1.5em;}
 #steal-bar{display:none;text-align:center;padding:4px 8px;margin-top:3px;background:linear-gradient(90deg,transparent,rgba(255,204,0,0.1),transparent);border:1px solid rgba(255,204,0,0.35);border-radius:5px;font-family:'Bebas Neue';font-size:0.8rem;letter-spacing:0.12em;color:var(--gold);}
 #steal-bar.show{display:block;}
+#trap-bar{display:none;text-align:center;padding:4px 8px;margin-top:3px;background:linear-gradient(90deg,transparent,rgba(255,80,0,0.12),transparent);border:1px solid rgba(255,100,0,0.45);border-radius:5px;font-family:'Bebas Neue';font-size:0.8rem;letter-spacing:0.12em;color:#ff7040;}
+#trap-bar.show{display:block;}
+.cell.my-trap{outline:2px dashed rgba(255,100,0,0.7);outline-offset:-3px;}
+.cell.my-trap::after{content:'💣';position:absolute;bottom:2px;right:3px;font-size:0.7rem;opacity:0.8;}
+.cbtn#btn-trap{background:rgba(255,80,0,0.12);border-color:rgba(255,120,0,0.45);color:#ff9060;}
+.cbtn#btn-trap:hover:not(:disabled){background:rgba(255,80,0,0.22);border-color:rgba(255,140,0,0.7);}
+.cbtn#btn-trap:disabled{opacity:0.25;}
+@keyframes trap-trigger{
+  0%{background:rgba(255,80,0,0.0);}
+  20%{background:rgba(255,80,0,0.5);}
+  50%{background:rgba(255,80,0,0.15);}
+  70%{background:rgba(255,80,0,0.45);}
+  100%{background:rgba(255,80,0,0.0);}
+}
+.cell.trap-triggered{animation:trap-trigger 0.7s ease-out forwards;}
 
 /* WAITING */
 #waiting{display:none;position:fixed;inset:0;background:rgba(8,12,20,0.94);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
@@ -231,6 +246,7 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
         <div id="qtext">—</div>
         <div id="answers"></div>
         <div id="controls">
+          <button class="cbtn" id="btn-trap"  onclick="activateTrap()">💣 TRAP</button>
           <button class="cbtn" id="btn-steal" onclick="activateSteal()">⚡ STEAL</button>
           <button class="cbtn" id="btn-next"  onclick="nextQuestion()">▶ NEXT Q</button>
           <button class="cbtn" id="btn-place" onclick="enterPlaceMode()">📍 PLACE</button>
@@ -240,6 +256,7 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
       </div>
       <div id="statusbar"></div>
       <div id="steal-bar">⚡ STEAL MODE — click where you think the tile is hidden!</div>
+      <div id="trap-bar">💣 TRAP MODE — click an empty cell to place your trap!</div>
     </div>
     <div class="side-panel">
       <div class="pbox"><h3>P2 Hand 🔵</h3><div class="hand-tiles" id="blue-hand"></div></div>
@@ -473,7 +490,7 @@ let gameState=null;
 let roomListener=null;
 
 // Local UI state — not synced
-let lPhase='idle';     // idle | question | answered | place | steal | steal-place
+let lPhase='idle';     // idle | question | answered | place | steal | steal-place | trap
 let lQ=null;           // current question object
 let lTile=null;        // selected tile id
 let lStealTile=null;   // tile id we're trying to steal
@@ -494,6 +511,8 @@ function makeState(code){
     forced:false,
     lastStolen:null,
     lastPlaced:null,
+    trapRed:null,
+    trapBlue:null,
     gameOver:false,
     msg:'Waiting for players...'
   };
@@ -523,6 +542,8 @@ function fixState(s){
   s.redJoined=!!s.redJoined; s.blueJoined=!!s.blueJoined; s.started=!!s.started;
   s.forced=!!s.forced; s.gameOver=!!s.gameOver;
   if(!s.lastPlaced)s.lastPlaced=null;
+  if(s.trapRed===undefined)s.trapRed=null;
+  if(s.trapBlue===undefined)s.trapBlue=null;
   return s;
 }
 
@@ -783,6 +804,10 @@ function renderGrid(s,isMyTurn){
       if(isMyTurn&&lPhase==='steal'&&g.player!==myRole&&!g.locked)cell.classList.add('steal-click');
     } else {
       if(isMyTurn&&(lPhase==='place'||lPhase==='steal-place'))cell.classList.add('place-target');
+      if(isMyTurn&&lPhase==='trap')cell.classList.add('place-target');
+      // Show my own trap location (invisible to opponent — never synced)
+      const myTrapKey = myRole==='red'?'trapRed':'trapBlue';
+      if(s[myTrapKey]===i) cell.classList.add('my-trap');
     }
     cell.addEventListener('click',(idx=>()=>cellClick(idx))(i));
     el.appendChild(cell);
@@ -834,19 +859,32 @@ function renderControls(s,isMyTurn,myHand){
   const bs=document.getElementById('btn-steal');
   const bp=document.getElementById('btn-place');
   const bsk=document.getElementById('btn-skip');
+  const btr=document.getElementById('btn-trap');
   if(!isMyTurn){
-    bn.disabled=bs.disabled=bp.disabled=bsk.disabled=true;
+    bn.disabled=bs.disabled=bp.disabled=bsk.disabled=btr.disabled=true;
     bs.style.cssText=''; bs.textContent='⚡ STEAL';
     bp.textContent='📍 PLACE';
+    btr.textContent='💣 TRAP';btr.style.cssText='';
     return;
   }
+  // Trap button: active only in idle phase, before trap has been used
+  const myTrapField = myRole==='red'?'trapRed':'trapBlue';
+  const trapUsed = s[myTrapField] !== null && s[myTrapField] !== undefined;
+  const inTrapMode = lPhase==='trap';
+  btr.disabled = trapUsed || (lPhase!=='idle'&&!inTrapMode);
+  btr.textContent = inTrapMode ? '✕ CANCEL TRAP' : (trapUsed ? '💣 TRAP USED' : '💣 TRAP');
+  if(inTrapMode){ btr.style.background='rgba(255,100,0,0.3)'; btr.style.borderColor='rgba(255,140,0,0.8)'; }
+  else { btr.style.cssText=''; }
   const answered=lPhase==='answered'||lPhase==='place'||lPhase==='steal'||lPhase==='steal-place';
-  bn.disabled=answered||(lPhase!=='idle'&&lPhase!=='question');
-  bsk.disabled=lPhase!=='idle'&&lPhase!=='question';
+  bn.disabled=answered||(lPhase!=='idle'&&lPhase!=='question')||inTrapMode;
+  bsk.disabled=(lPhase!=='idle'&&lPhase!=='question')||inTrapMode;
   bs.disabled=!lQ||(lPhase!=='answered');
   bp.disabled=!lQ||(lPhase!=='answered')||!myHand.length||lStealAvail;
   bs.textContent=lPhase==='steal'?'✕ CANCEL STEAL':'⚡ STEAL';
   bp.textContent=(lPhase==='place'||lPhase==='steal-place')?'✕ CANCEL':'📍 PLACE';
+  // Trap-bar indicator
+  const trapBarEl = document.getElementById('trap-bar');
+  if(trapBarEl) trapBarEl.classList.toggle('show', inTrapMode);
   if(lPhase==='steal'){bs.disabled=false;}
   if(lPhase==='place'||lPhase==='steal-place'){bp.disabled=false;}
   if(lStealAvail&&lPhase==='answered'){
@@ -1002,6 +1040,26 @@ function playSound(type){
         o.start(ctx.currentTime+i*0.08);
         o.stop(ctx.currentTime+i*0.08+0.35);
       });
+    } else if(type==='trap-set'){
+      // Sneaky muted clunk
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.setValueAtTime(220,ctx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(80,ctx.currentTime+0.25);
+      g.gain.setValueAtTime(0.3,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.3);
+      o.start(ctx.currentTime);o.stop(ctx.currentTime+0.35);
+    } else if(type==='trap-triggered'){
+      // Loud explosive boom + descend
+      [1,2,3].forEach(i=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);
+        o.type='sawtooth';o.frequency.setValueAtTime(400-i*80,ctx.currentTime+i*0.05);
+        o.frequency.exponentialRampToValueAtTime(40,ctx.currentTime+0.5+i*0.05);
+        g.gain.setValueAtTime(0.4,ctx.currentTime+i*0.05);
+        g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.6);
+        o.start(ctx.currentTime+i*0.05);o.stop(ctx.currentTime+0.65);
+      });
     } else if(type==='steal'){
       // Dramatic descending whoosh + low thud
       const o=ctx.createOscillator(),g=ctx.createGain();
@@ -1138,6 +1196,23 @@ function cellClick(idx){
   if(!gameState||gameState.turn!==myRole)return;
   if(lPhase==='place'||lPhase==='steal-place')placeTile(idx);
   else if(lPhase==='steal')attemptSteal(idx);
+  else if(lPhase==='trap')placeTrap(idx);
+}
+
+function placeTrap(idx){
+  const s=gameState;
+  if(s.grid[idx]){document.getElementById('statusbar').textContent='Cell occupied — choose an empty cell!';return;}
+  const myTrapField=myRole==='red'?'trapRed':'trapBlue';
+  // Store trap index only locally AND in Firebase under our field
+  // Opponent never reads their own trap field value in the UI
+  const updated={...s,[myTrapField]:idx};
+  lPhase='idle';
+  gameState=updated;
+  saveState(updated);
+  playSound('trap-set');
+  document.getElementById('statusbar').textContent='💣 Trap set! Your opponent has no idea...';
+  document.getElementById('trap-bar').classList.remove('show');
+  renderGame();
 }
 
 function placeTile(idx){
@@ -1160,6 +1235,14 @@ function placeTile(idx){
   updated.currentQ=null;
   updated.lastStolen=null;
   updated.lastPlaced=placedId;  // block immediate re-ask on just-placed tile
+  // Check if opponent has a trap at this cell
+  const oppTrapField=myRole==='red'?'trapBlue':'trapRed';
+  const trapIdx=updated[oppTrapField];
+  if(trapIdx===idx){
+    // TRAP TRIGGERED — steal placed tile + same-cat adjacent tiles
+    triggerTrap(updated,idx,placedId,myRole);
+    return; // triggerTrap handles save/render
+  }
   checkSets(updated,myRole);
   if(!updated.gameOver){
     updated.turn=opp(myRole);
@@ -1173,9 +1256,109 @@ function placeTile(idx){
   if(updated.gameOver){showEndScreen(updated);}else{renderGame();}
 }
 
+function triggerTrap(s, trapIdx, placedTileId, victimRole){
+  const trapOwner=opp(victimRole);
+  const trapCat=getTileCat(placedTileId);
+  const grid=[...s.grid];
+
+  // The just-placed tile and same-cat adjacent unlocked tiles of victim are stolen
+  const ADJACENT=[[-1,0],[1,0],[0,-1],[0,1]];
+  const toSteal=[trapIdx]; // always steal the tile that triggered
+  const r0=Math.floor(trapIdx/GC), c0=trapIdx%GC;
+  for(const [dr,dc] of ADJACENT){
+    const r=r0+dr, c=c0+dc;
+    if(r<0||r>=GC||c<0||c>=GC)continue;
+    const ni=r*GC+c;
+    const cell=grid[ni];
+    if(cell&&cell.player===victimRole&&!cell.locked&&getTileCat(cell.tileId)===trapCat){
+      toSteal.push(ni);
+    }
+  }
+
+  // Move stolen tiles to trap owner's hand, remove from grid
+  let victimHandKey=victimRole==='red'?'handRed':'handBlue';
+  let ownerHandKey=trapOwner==='red'?'handRed':'handBlue';
+  let victimHand=[...s[victimHandKey]];
+  let ownerHand=[...s[ownerHandKey]];
+
+  let stolenCount=0;
+  for(const si of toSteal){
+    const cell=grid[si];
+    if(cell){
+      ownerHand.push(cell.tileId);
+      // Remove from victim hand if it was there (the just-placed tile was just removed from hand)
+      const hi=victimHand.indexOf(cell.tileId);
+      if(hi!==-1)victimHand.splice(hi,1);
+      grid[si]=null;
+      stolenCount++;
+    }
+  }
+
+  // Money: £100 per stolen tile moves from victim to owner
+  const moneyStolen=stolenCount*100;
+  const newMoney={...s.money,
+    [trapOwner]:(s.money[trapOwner]||0)+moneyStolen,
+    [victimRole]:Math.max(0,(s.money[victimRole]||0)-moneyStolen)
+  };
+
+  // Spend the trap (set to -1 = used)
+  const trapField=trapOwner==='red'?'trapRed':'trapBlue';
+
+  const updated={...s,
+    grid,
+    [victimHandKey]:victimHand,
+    [ownerHandKey]:ownerHand,
+    money:newMoney,
+    [trapField]:-1,
+    lastStolen:null,
+    lastPlaced:null,
+    turn:opp(victimRole),
+    msg:'💣 TRAP TRIGGERED! '+(trapOwner==='red'?'P1':'P2')+' steals '+stolenCount+' tile'+(stolenCount!==1?'s':'')+' and £'+moneyStolen+'!',
+    currentQ:null
+  };
+  checkForced(updated);
+
+  // Animate the trap trigger on both screens
+  if(victimRole===myRole){
+    // I walked into the trap — flash the cells
+    setTimeout(()=>{
+      const cellEls=document.querySelectorAll('#grid .cell');
+      toSteal.forEach(si=>{if(cellEls[si])cellEls[si].classList.add('trap-triggered');});
+    },50);
+    playSound('trap-triggered');
+    // Show loss popups
+    toSteal.forEach(()=>popMoney(-100,victimRole,victimRole==='red'?'red-money':'blue-money'));
+  } else {
+    // My trap fired — celebrate
+    playSound('trap-triggered');
+    flashSteal();
+    popMoney(moneyStolen,trapOwner,trapOwner==='red'?'red-money':'blue-money');
+    setTimeout(()=>{
+      const cellEls=document.querySelectorAll('#grid .cell');
+      toSteal.forEach(si=>{if(cellEls[si])cellEls[si].classList.add('trap-triggered');});
+    },50);
+  }
+
+  gameState=updated;
+  saveState(updated);
+  setTimeout(()=>renderGame(),500);
+}
+
 // ============================================================
 // STEAL
 // ============================================================
+// ── TRAP SOUND ──
+// (added into playSound — see below — this is the activateTrap handler)
+function activateTrap(){
+  if(!gameState||gameState.turn!==myRole)return;
+  if(lPhase==='trap'){lPhase='idle';renderGame();return;} // cancel
+  const myTrapField=myRole==='red'?'trapRed':'trapBlue';
+  if(gameState[myTrapField]!==null&&gameState[myTrapField]!==undefined)return; // already used
+  if(lPhase!=='idle')return;
+  lPhase='trap';
+  renderGame();
+}
+
 function activateSteal(){
   if(!gameState||gameState.turn!==myRole)return;
   if(lPhase==='steal'){
@@ -1387,6 +1570,8 @@ window.nextQuestion=nextQuestion;
 window.activateSteal=activateSteal;
 window.enterPlaceMode=enterPlaceMode;
 window.skipTurn=skipTurn;
+window.activateTrap=activateTrap;
+window.placeTrap=placeTrap;
 
 // Create Game button
 window.goCreate=async function(){
