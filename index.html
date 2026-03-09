@@ -56,6 +56,16 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
 .vs{font-family:'Bebas Neue';font-size:1.2rem;color:rgba(200,220,255,0.25);}
 @keyframes money-pop{0%{transform:translateY(0) scale(1);opacity:1;}50%{transform:translateY(-50px) scale(1.5);opacity:1;}100%{transform:translateY(-90px) scale(0.8);opacity:0;}}
 @keyframes steal-flash{0%,100%{background:rgba(255,34,68,0);}35%{background:rgba(255,34,68,0.3);}70%{background:rgba(255,34,68,0.1);}}
+@keyframes set-flash{
+  0%  {opacity:1;transform:scale(1);}
+  20% {opacity:0;transform:scale(1.12);}
+  40% {opacity:1;transform:scale(1);}
+  60% {opacity:0;transform:scale(1.12);}
+  80% {opacity:1;transform:scale(1);}
+  90% {opacity:0;transform:scale(1.08);}
+  100%{opacity:0;transform:scale(0.8);}
+}
+.cell.set-vanish{animation:set-flash 1.4s ease-in-out forwards;pointer-events:none;}
 .money-pop{position:fixed;font-family:'Bebas Neue';font-size:2.4rem;pointer-events:none;z-index:9000;animation:money-pop 1.5s ease-out forwards;}
 .steal-flash-overlay{position:fixed;inset:0;pointer-events:none;z-index:8999;animation:steal-flash 0.8s ease-out forwards;}
 #cat-bar{display:flex;gap:6px;flex-wrap:wrap;padding:3px 0;align-items:center;min-height:32px;}
@@ -1011,7 +1021,7 @@ function playSound(type){
       g2.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.6);
       o2.start(ctx.currentTime+0.25);o2.stop(ctx.currentTime+0.65);
     } else if(type==='set'){
-      // Triumphant fanfare
+      // Triumphant fanfare + vanish whoosh
       [392,494,587,784,988].forEach((freq,i)=>{
         const o=ctx.createOscillator(),g=ctx.createGain();
         o.connect(g);g.connect(ctx.destination);
@@ -1022,6 +1032,15 @@ function playSound(type){
         o.start(ctx.currentTime+i*0.1);
         o.stop(ctx.currentTime+i*0.1+0.45);
       });
+      // Vanish whoosh at the end
+      const ow=ctx.createOscillator(),gw=ctx.createGain();
+      ow.connect(gw);gw.connect(ctx.destination);
+      ow.type='sine';
+      ow.frequency.setValueAtTime(800,ctx.currentTime+0.9);
+      ow.frequency.exponentialRampToValueAtTime(3000,ctx.currentTime+1.4);
+      gw.gain.setValueAtTime(0.15,ctx.currentTime+0.9);
+      gw.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+1.45);
+      ow.start(ctx.currentTime+0.9);ow.stop(ctx.currentTime+1.5);
     }
     setTimeout(()=>ctx.close(),2000);
   }catch(e){console.log('Audio error:',e);}
@@ -1246,8 +1265,12 @@ function checkSets(s,player){
 function lockSet(s,cells,player,cat){
   const cd=ALL_CATS[cat];
   const grid=[...s.grid];
+
+  // Mark set cells as locked (briefly — they'll vanish after animation)
   for(const i of cells)grid[i]={...grid[i],locked:true,cat};
+  // Remove any other same-cat tiles already on the board
   for(let i=0;i<GS;i++){if(grid[i]&&!grid[i].locked&&getTileCat(grid[i].tileId)===cat)grid[i]=null;}
+
   const filterCat=arr=>arr.filter(id=>getTileCat(id)!==cat);
   s.handRed=filterCat(s.handRed);s.handBlue=filterCat(s.handBlue);
   s.activeCats=s.activeCats.filter(c=>c!==cat);
@@ -1256,8 +1279,39 @@ function lockSet(s,cells,player,cat){
   s.scores={...s.scores,[player]:(s.scores[player]||0)+1};
   s.money={...s.money,[player]:(s.money[player]||0)+500};
   s.grid=grid;
-  s.msg=cd.label+' SET LOCKED! (+£500) '+(player==='red'?'P1':'P2')+' scores!'+(newCat?' New category: '+ALL_CATS[newCat].label+'!':'');
-  if(player===myRole){playSound('set');popMoney(500,player,player==='red'?'red-money':'blue-money');}
+  s.msg=cd.label+' SET COMPLETED! (+£500) '+(player==='red'?'P1':'P2')+' scores!'+(newCat?' New category: '+ALL_CATS[newCat].label+'!':'');
+
+  if(player===myRole){
+    playSound('set');
+    popMoney(500,player,player==='red'?'red-money':'blue-money');
+
+    // Trigger flash animation on the 4 locked cells, then remove them from grid
+    setTimeout(()=>{
+      const cellEls=document.querySelectorAll('#grid .cell');
+      cells.forEach(idx=>{
+        if(cellEls[idx])cellEls[idx].classList.add('set-vanish');
+      });
+      // After animation completes, wipe the cells from Firebase state
+      setTimeout(()=>{
+        const clearedGrid=gameState?[...gameState.grid]:[...s.grid];
+        cells.forEach(idx=>{clearedGrid[idx]=null;});
+        const updated={...gameState,grid:clearedGrid};
+        gameState=updated;
+        saveState(updated);
+        renderGame();
+      },1450);
+    },50);
+  } else {
+    // Opponent made the set — animate their cells vanishing on our screen
+    setTimeout(()=>{
+      const cellEls=document.querySelectorAll('#grid .cell');
+      cells.forEach(idx=>{
+        if(cellEls[idx])cellEls[idx].classList.add('set-vanish');
+      });
+    },50);
+    // The active player will push the cleared grid to Firebase — we just wait for it
+  }
+
   if(s.scores[player]>=2){s.gameOver=true;return;}
   if(newCat){
     setTimeout(()=>{
@@ -1265,7 +1319,7 @@ function lockSet(s,cells,player,cat){
       b.textContent='NEW: '+ncd.label.toUpperCase()+'!';b.style.display='block';
       b.style.background=ncd.color;b.style.border='1px solid '+ncd.border;b.style.color='white';
       setTimeout(()=>b.style.display='none',4000);
-    },100);
+    },1600);
   }
   checkForced(s);
 }
