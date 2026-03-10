@@ -138,6 +138,13 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
 /* WAITING */
 #waiting{display:none;position:fixed;inset:0;background:rgba(8,12,20,0.94);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
 #waiting.show{display:flex;}
+/* CAT PICKER */
+#cat-picker{display:none;position:fixed;inset:0;background:rgba(8,12,20,0.96);z-index:300;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px;}
+#cat-picker.show{display:flex;}
+#cat-picker h2{font-family:'Bebas Neue';font-size:2rem;letter-spacing:0.12em;color:#eef;margin:0;}
+#cat-picker p{font-family:'Share Tech Mono';font-size:0.75rem;color:rgba(200,220,255,0.5);margin:0;text-align:center;}
+.cat-pick-btn{font-family:'Bebas Neue';font-size:1.2rem;letter-spacing:0.1em;padding:14px 28px;border-radius:8px;border:1px solid;cursor:pointer;min-width:220px;text-align:center;transition:all 0.2s;}
+.cat-pick-btn:hover{filter:brightness(1.3);transform:scale(1.04);}
 #waiting p{font-family:'Bebas Neue';font-size:1.6rem;letter-spacing:0.15em;color:rgba(200,220,255,0.7);}
 #waiting .wcode{font-family:'Bebas Neue';font-size:3.5rem;letter-spacing:0.4em;color:var(--gold);text-shadow:0 0 20px rgba(255,204,0,0.5);}
 #waiting small{font-family:'Share Tech Mono';font-size:0.7rem;color:rgba(200,220,255,0.3);}
@@ -280,6 +287,14 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
     <div id="end-title">GAME OVER</div>
     <div id="end-msg"></div>
     <div id="end-scores"></div>
+  </div><!-- #end -->
+
+  <!-- CATEGORY PICKER OVERLAY -->
+  <div id="cat-picker">
+    <h2 id="cat-picker-title">Choose a Category</h2>
+    <p id="cat-picker-sub">Select which category to release into play</p>
+    <div id="cat-picker-btns"></div>
+  </div>
     <button class="endbtn" onclick="goHome()">PLAY AGAIN</button>
   </div>
 </div>
@@ -381,6 +396,65 @@ const QUESTIONS=[
   {q:"This character is associated with the pastoral tradition of female shepherds in 18th-century English literature and her rhyme is considered one of the first children's verses with a named female protagonist. Who?",cat:'nursery',a:'Little Bo Peep'},
   {q:"A tuffet was not a small stool, as commonly assumed — food historians believe it referred to a grassy mound, and curds and whey were a common outdoor food for working dairy families. Which character?",cat:'nursery',a:'Little Miss Muffet'},
   {q:"Some historians link this rhyme to the French tale of Joli and Gille, two water-carriers punished by their master — suggesting it may be one of the oldest surviving nursery rhymes with identifiable European roots. Who?",cat:'nursery',a:'Jack and Jill'},
+
+  // ── FAMOUS TOMS – ROUND 2 ──
+  {q:"This Tom turned down the lead role in Schindler's List, which eventually went to Liam Neeson — the same year he won his first Oscar. Which Tom?",cat:'celebrities',a:'Tom Hanks'},
+  {q:"Which Tom starred as a terminally ill man living indefinitely in an airport terminal, based loosely on a real person who spent 18 years in Charles de Gaulle airport?",cat:'celebrities',a:'Tom Hanks'},
+  {q:"This Tom was paid just £50,000 for Forrest Gump, but negotiated a percentage of profits — earning him over £40 million. Which Tom?",cat:'celebrities',a:'Tom Hanks'},
+  {q:"Which Tom co-wrote, directed and starred in a 1996 film about a fictional band from the suburbs of Cleveland, Ohio?",cat:'celebrities',a:'Tom Hanks'},
+  {q:"This Tom became the second person in Hollywood history to win the Best Actor Oscar in consecutive years. The first was Spencer Tracy. Which Tom?",cat:'celebrities',a:'Tom Hanks'},
+  {q:"Which Tom did not attend drama school and was originally turned down at his first casting audition for Bosom Buddies before being cast anyway?",cat:'celebrities',a:'Tom Hanks'},
+  {q:"This Tom was scientifically measured as running at 21 mph on a treadmill whilst preparing for his iconic running scene — in full costume. Which Tom?",cat:'celebrities',a:'Tom Cruise'},
+  {q:"Which Tom is the only actor to have starred in three consecutive films that each grossed over $200 million, doing so three separate times in his career?",cat:'celebrities',a:'Tom Cruise'},
+  {q:"This Tom separated from his wife the day after she gave birth — a widely reported event that led to massive public backlash and hurt his career in the mid-2000s. Which Tom?",cat:'celebrities',a:'Tom Cruise'},
+  {q:"Which Tom holds the record for having a film in the US top 10 box office chart in every single decade from the 1980s through to the 2020s?",cat:'celebrities',a:'Tom Cruise'},
+  {q:"This Tom has a reported net worth of over $600 million — largely accumulated not through acting fees but through profit participation deals. Which Tom?",cat:'celebrities',a:'Tom Cruise'},
+  {q:"Which Tom was originally a frontrunner to play Thor before Marvel decided they wanted an unknown — and ended up playing the villain opposite him instead?",cat:'celebrities',a:'Tom Hiddleston'},
+  {q:"This Tom studied Classics at Cambridge University before training at RADA — and is known for speaking multiple languages including French and Greek. Which Tom?",cat:'celebrities',a:'Tom Hiddleston'},
+  {q:"Which Tom reportedly auditioned for the role of James Bond and screen-tested in full tuxedo before Daniel Craig was confirmed for a third time?",cat:'celebrities',a:'Tom Hiddleston'},
+  {q:"This Tom has written extensively about acting philosophy and trained in ballet, boxing, and mixed martial arts for a single role that required fewer than 300 words of dialogue. Which Tom?",cat:'celebrities',a:'Tom Hardy'},
+  {q:"Which Tom played both identical twins in the same film, a role that required filming every scene twice with himself — a technically complex process avoided by most actors?",cat:'celebrities',a:'Tom Hardy'},
+  {q:"This Tom was arrested and imprisoned at 19 for stealing a car at gunpoint — an experience he credits as central to his understanding of criminal psychology in his roles. Which Tom?",cat:'celebrities',a:'Tom Hardy'},
+
+  // ── BISCUITS – ROUND 2 ──
+  {q:"This biscuit was originally manufactured by McVitie's in Edinburgh in 1892, and its inventor never patented the recipe — meaning competitors could copy it immediately. Which biscuit?",cat:'biscuits',a:'Digestive'},
+  {q:"Astronaut Tim Peake reportedly smuggled several packets of this biscuit onto the International Space Station, calling it the thing he missed most about Earth. Which biscuit?",cat:'biscuits',a:'Digestive'},
+  {q:"This biscuit causes more A&E visits annually in the UK than any other food item — mostly from burns caused by hot tea splashing during dunking. Which biscuit?",cat:'biscuits',a:'Digestive'},
+  {q:"The chocolate-coated version of this biscuit was introduced in 1925, but McVitie's insists it must be eaten chocolate-side down to correctly hit the taste buds. Which biscuit?",cat:'biscuits',a:'Digestive'},
+  {q:"This biscuit was introduced to Britain as a premium product costing twice the price of rivals — and was marketed specifically to the working class as an affordable luxury. Which biscuit?",cat:'biscuits',a:'Bourbon'},
+  {q:"When Marks & Spencer launched a luxury version of this biscuit with Belgian chocolate, it outsold the original by 3:1 in its first month — to the original manufacturer's embarrassment. Which biscuit?",cat:'biscuits',a:'Bourbon'},
+  {q:"This biscuit has exactly 16 holes arranged in two rows of eight — a design feature originally intended to control even baking rather than for decoration. Which biscuit?",cat:'biscuits',a:'Bourbon'},
+  {q:"A 2019 poll of 2,000 British adults named this biscuit the one they would choose to survive on alone, above shortbread, hobnobs, and rich tea. Which biscuit?",cat:'biscuits',a:'Bourbon'},
+  {q:"The elaborate pressed pattern on this biscuit depicting scrollwork and urns is almost identical across all brands — because the original Victorian mould design entered the public domain in the 1920s. Which biscuit?",cat:'biscuits',a:'Custard Cream'},
+  {q:"This biscuit was rationed during World War II, leading to a black market in which single biscuits were reportedly traded for cigarettes and sugar. Which biscuit?",cat:'biscuits',a:'Custard Cream'},
+  {q:"Despite being made in the UK, the name of this biscuit caused diplomatic confusion when it was exported to France, where the word printed on it means something completely different. Which biscuit?",cat:'biscuits',a:'Custard Cream'},
+  {q:"This biscuit's manufacturer Burton's Foods once refused to reveal the exact recipe to its own sales team — it is considered one of the most closely guarded food secrets in British manufacturing. Which biscuit?",cat:'biscuits',a:'Jammy Dodger'},
+
+  // ── FARMYARD ANIMALS – ROUND 2 ──
+  {q:"This animal has a four-chambered stomach but unlike cows, one chamber produces methane as a byproduct — making global herds a significant contributor to greenhouse gas emissions. Which farmyard animal?",cat:'farmyard',a:'Cow'},
+  {q:"Research at Northampton University found this animal can recognise human faces and remember them for years — distinguishing friendly from unfamiliar people by heart rate alone. Which farmyard animal?",cat:'farmyard',a:'Sheep'},
+  {q:"This animal can run at up to 11 mph in short bursts, but its famous rotundity means it overheats quickly — making it ineffective in any pursuit longer than 50 metres. Which farmyard animal?",cat:'farmyard',a:'Pig'},
+  {q:"The average British farmyard of this animal produces enough eggs annually to stack, if balanced end to end, from London to Edinburgh and back again — four times. Which animal?",cat:'farmyard',a:'Chicken'},
+  {q:"This animal's milk contains more calcium per litre than any other commonly farmed animal and was the primary source of nutrition for European infants before formula milk existed. Which farmyard animal?",cat:'farmyard',a:'Cow'},
+  {q:"Scientists have recorded this animal using tools — specifically manipulating gate latches and water troughs — in independent trials at three different UK farms. Which farmyard animal?",cat:'farmyard',a:'Pig'},
+  {q:"This animal has a social hierarchy so rigid that the same individual will eat first at every feeding for its entire life — a structure maintained through subtle physical signals rather than aggression. Which farmyard animal?",cat:'farmyard',a:'Chicken'},
+  {q:"This animal can identify individual members of its flock not just by sight but by smell, and has been shown in studies to experience measurable stress when separated from close companions. Which farmyard animal?",cat:'farmyard',a:'Sheep'},
+  {q:"The leather produced from this animal's hide is used in over 65% of all football boots manufactured globally, despite synthetic alternatives being technically superior in several performance metrics. Which farmyard animal?",cat:'farmyard',a:'Cow'},
+  {q:"This animal experiences REM sleep — the stage associated with dreaming in humans — and research in 2021 confirmed it shows rapid eye movement and twitching consistent with active dream states. Which farmyard animal?",cat:'farmyard',a:'Pig'},
+
+  // ── NURSERY RHYMES – ROUND 2 ──
+  {q:"Academic analysis of this rhyme found 47 distinct regional variants across Britain — more than any other English nursery rhyme — suggesting it was independently composed in multiple locations. Which character?",cat:'nursery',a:'Humpty Dumpty'},
+  {q:"The earliest printed version of this rhyme appeared in a 1791 music book and was presented as a riddle — the answer being an egg — though no earlier source confirms this interpretation. Which character?",cat:'nursery',a:'Humpty Dumpty'},
+  {q:"This character appears in a 1922 short story by P.G. Wodehouse in which she is reimagined as a landlady whose wandering tenant is her only income — used to satirise post-war austerity. Which nursery rhyme character?",cat:'nursery',a:'Little Bo Peep'},
+  {q:"The word used to describe this character's occupation — 'keeper of sheep' — was an archaic title in medieval England that carried the same legal responsibility as a modern-day security guard. Which character?",cat:'nursery',a:'Little Bo Peep'},
+  {q:"Entomologist Thomas Muffet, theorised to have inspired this rhyme, published a book in 1590 praising spiders as beautiful — making the rhyme's framing as a horror story deliciously ironic. Which character?",cat:'nursery',a:'Little Miss Muffet'},
+  {q:"A Victorian etiquette guide cited this character as a cautionary tale for young ladies — the lesson being that eating outdoors in fields was considered improper behaviour for girls of good standing. Which character?",cat:'nursery',a:'Little Miss Muffet'},
+  {q:"The meter of this rhyme — known as anapaestic tetrameter — is the same rhythm used in Dr. Seuss books, leading literary scholars to suggest Seuss was directly influenced by it. Which nursery rhyme?",cat:'nursery',a:'Jack and Jill'},
+  {q:"This rhyme was translated into 34 languages by 1900, making it one of the most widely distributed pieces of English literature globally — ahead of several Shakespeare plays. Which nursery rhyme?",cat:'nursery',a:'Jack and Jill'},
+  {q:"This character was cited in a 1987 European Court of Human Rights case as an example of culturally embedded expectations of physical impossibility — used to argue against unrealistic legal standards. Which character?",cat:'nursery',a:'Humpty Dumpty'},
+  {q:"The phrase associated with this character — 'leave them alone and they'll come home' — entered English common law as a metaphor for non-intervention policy in the 1850s. Which character?",cat:'nursery',a:'Little Bo Peep'},
+  {q:"This character's name was used as Allied code during World War II to identify a specific type of ambush — based on the idea of luring an enemy into a false sense of safety before striking. Which character?",cat:'nursery',a:'Little Miss Muffet'},
+  {q:"Folklorist Iona Opie recorded 23 children singing this rhyme simultaneously in different languages in a 1960 playground study — using it as evidence that oral rhyme transcends linguistic barriers. Which rhyme?",cat:'nursery',a:'Jack and Jill'},
 ];
 
 // ============================================================
@@ -506,8 +580,9 @@ function makeState(code){
     handRed:[], handBlue:[],
     grid:Array(GS).fill(null),
     usedQ:[],
-    activeCats:CAT_KEYS.slice(0,2),
-    catQueue:CAT_KEYS.slice(2),
+    activeCats:[],
+    catQueue:[...CAT_KEYS],
+    needsCatPick:'red',
     forced:false,
     lastStolen:null,
     lastPlaced:null,
@@ -531,6 +606,7 @@ function fixState(s){
   if(!s.handBlue||!Array.isArray(s.handBlue))s.handBlue=s.handBlue?Object.values(s.handBlue):[];
   if(!s.usedQ||!Array.isArray(s.usedQ))s.usedQ=s.usedQ?Object.values(s.usedQ):[];
   if(!s.activeCats||!Array.isArray(s.activeCats))s.activeCats=s.activeCats?Object.values(s.activeCats):[];
+  if(s.needsCatPick===undefined)s.needsCatPick=null;
   if(!s.catQueue||!Array.isArray(s.catQueue))s.catQueue=s.catQueue?Object.values(s.catQueue):[];
   if(!s.grid||!Array.isArray(s.grid)){
     const g=Array(GS).fill(null);
@@ -725,6 +801,57 @@ function onStateUpdate(s){
     }
   }
 
+  // Show category picker if it's our turn to choose
+  if(s.needsCatPick && s.needsCatPick===myRole && s.catQueue && s.catQueue.length){
+    showCatPicker(s);
+    return;
+  } else {
+    const picker=document.getElementById('cat-picker');
+    if(picker)picker.classList.remove('show');
+  }
+
+  renderGame();
+}
+
+function showCatPicker(s){
+  const title = document.getElementById('cat-picker-title');
+  const sub   = document.getElementById('cat-picker-sub');
+  const btns  = document.getElementById('cat-picker-btns');
+  title.textContent = myRole==='red' ? '🔴 P1 — Choose a Category' : '🔵 P2 — Choose a Category';
+  sub.textContent   = s.activeCats.length===0
+    ? 'Pick the first category to enter the game'
+    : 'Pick the next category to enter the game';
+  btns.innerHTML = '';
+  (s.catQueue||[]).forEach(catKey=>{
+    const cd = ALL_CATS[catKey];
+    const btn = document.createElement('button');
+    btn.className = 'cat-pick-btn';
+    btn.style.background = cd.color;
+    btn.style.borderColor = cd.border;
+    btn.style.color = '#fff';
+    btn.textContent = cd.label;
+    btn.onclick = () => pickCategory(catKey);
+    btns.appendChild(btn);
+  });
+  document.getElementById('cat-picker').classList.add('show');
+}
+
+function pickCategory(catKey){
+  if(!gameState)return;
+  const s={...gameState};
+  s.activeCats=[...(s.activeCats||[]), catKey];
+  s.catQueue=(s.catQueue||[]).filter(c=>c!==catKey);
+  // Flow: red picks first → then blue picks → then null until next set
+  if(s.activeCats.length===1){
+    s.needsCatPick='blue'; // P1 just picked, now P2 picks
+  } else {
+    s.needsCatPick=null;   // both first picks done; future picks triggered by lockSet
+  }
+  s.msg=ALL_CATS[catKey].label+' released into play!';
+  document.getElementById('cat-picker').classList.remove('show');
+  gameState=s;
+  saveState(s);
+  // If it's now the opponent's turn to pick, they'll see the picker on their screen
   renderGame();
 }
 
@@ -957,6 +1084,10 @@ function getEligible(s){
 function nextQuestion(){
   if(!gameState||gameState.turn!==myRole)return;
   if(lPhase!=='idle'&&lPhase!=='question')return;
+  // If we need to pick a category first, open picker instead
+  if(gameState.needsCatPick===myRole && gameState.catQueue && gameState.catQueue.length){
+    showCatPicker(gameState);return;
+  }
   const s=gameState;
   const pool=getEligible(s);
   if(!pool.length){
@@ -1457,12 +1588,10 @@ function lockSet(s,cells,player,cat){
   const filterCat=arr=>arr.filter(id=>getTileCat(id)!==cat);
   s.handRed=filterCat(s.handRed);s.handBlue=filterCat(s.handBlue);
   s.activeCats=s.activeCats.filter(c=>c!==cat);
-  let newCat=null;
-  if(s.catQueue.length){newCat=s.catQueue[0];s.catQueue=s.catQueue.slice(1);s.activeCats=[...s.activeCats,newCat];}
   s.scores={...s.scores,[player]:(s.scores[player]||0)+1};
   s.money={...s.money,[player]:(s.money[player]||0)+500};
   s.grid=grid;
-  s.msg=cd.label+' SET COMPLETED! (+£500) '+(player==='red'?'P1':'P2')+' scores!'+(newCat?' New category: '+ALL_CATS[newCat].label+'!':'');
+  s.msg=cd.label+' SET COMPLETED! (+£500) '+(player==='red'?'P1':'P2')+' scores!';
 
   if(player===myRole){
     playSound('set');
@@ -1496,13 +1625,10 @@ function lockSet(s,cells,player,cat){
   }
 
   if(s.scores[player]>=2){s.gameOver=true;return;}
-  if(newCat){
-    setTimeout(()=>{
-      const b=document.getElementById('new-cat');const ncd=ALL_CATS[newCat];
-      b.textContent='NEW: '+ncd.label.toUpperCase()+'!';b.style.display='block';
-      b.style.background=ncd.color;b.style.border='1px solid '+ncd.border;b.style.color='white';
-      setTimeout(()=>b.style.display='none',4000);
-    },1600);
+  // Next player to move gets to pick the next category (if one is available)
+  if(s.catQueue.length){
+    const nextPlayer=opp(player); // turn will switch to opp after this
+    s.needsCatPick=nextPlayer;
   }
   checkForced(s);
 }
@@ -1572,6 +1698,8 @@ window.enterPlaceMode=enterPlaceMode;
 window.skipTurn=skipTurn;
 window.activateTrap=activateTrap;
 window.placeTrap=placeTrap;
+window.pickCategory=pickCategory;
+window.showCatPicker=showCatPicker;
 
 // Create Game button
 window.goCreate=async function(){
