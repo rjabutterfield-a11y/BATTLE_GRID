@@ -801,13 +801,15 @@ function onStateUpdate(s){
     }
   }
 
-  // Show category picker if it's our turn to choose
-  if(s.needsCatPick && s.needsCatPick===myRole && s.catQueue && s.catQueue.length){
+  // Show category picker overlay only for the player who needs to pick
+  const picker=document.getElementById('cat-picker');
+  if(s.needsCatPick && s.needsCatPick===myRole && (s.catQueue||[]).length){
     showCatPicker(s);
+    // Still render the game behind the overlay so it's not a blank screen
+    renderGame();
     return;
   } else {
-    const picker=document.getElementById('cat-picker');
-    if(picker)picker.classList.remove('show');
+    if(picker) picker.classList.remove('show');
   }
 
   renderGame();
@@ -841,17 +843,24 @@ function pickCategory(catKey){
   const s={...gameState};
   s.activeCats=[...(s.activeCats||[]), catKey];
   s.catQueue=(s.catQueue||[]).filter(c=>c!==catKey);
-  // Flow: red picks first → then blue picks → then null until next set
+
   if(s.activeCats.length===1){
-    s.needsCatPick='blue'; // P1 just picked, now P2 picks
+    // P1 just picked — P2 now picks (turn stays on red, game hasn't started yet)
+    s.needsCatPick='blue';
+    s.msg=ALL_CATS[catKey].label+' in play! 🔵 P2 — choose your category...';
+  } else if(s.activeCats.length===2 && s.needsCatPick==='blue'){
+    // P2 just picked — game can now begin. Turn is red, no more picking needed.
+    s.needsCatPick=null;
+    s.msg=ALL_CATS[catKey].label+' in play! 🔴 P1 — your turn! Press NEXT Q.';
   } else {
-    s.needsCatPick=null;   // both first picks done; future picks triggered by lockSet
+    // Post-set pick — clear flag, normal play resumes on whoever's turn it is
+    s.needsCatPick=null;
+    s.msg=ALL_CATS[catKey].label+' released into play!';
   }
-  s.msg=ALL_CATS[catKey].label+' released into play!';
+
   document.getElementById('cat-picker').classList.remove('show');
   gameState=s;
   saveState(s);
-  // If it's now the opponent's turn to pick, they'll see the picker on their screen
   renderGame();
 }
 
@@ -1003,8 +1012,10 @@ function renderControls(s,isMyTurn,myHand){
   if(inTrapMode){ btr.style.background='rgba(255,100,0,0.3)'; btr.style.borderColor='rgba(255,140,0,0.8)'; }
   else { btr.style.cssText=''; }
   const answered=lPhase==='answered'||lPhase==='place'||lPhase==='steal'||lPhase==='steal-place';
-  bn.disabled=answered||(lPhase!=='idle'&&lPhase!=='question')||inTrapMode;
-  bsk.disabled=(lPhase!=='idle'&&lPhase!=='question')||inTrapMode;
+  const needsPick = !!(gameState && gameState.needsCatPick===myRole && (gameState.catQueue||[]).length);
+  const noCats = !gameState || !gameState.activeCats || gameState.activeCats.length===0;
+  bn.disabled=answered||(lPhase!=='idle'&&lPhase!=='question')||inTrapMode||noCats||needsPick;
+  bsk.disabled=(lPhase!=='idle'&&lPhase!=='question')||inTrapMode||needsPick;
   bs.disabled=!lQ||(lPhase!=='answered');
   bp.disabled=!lQ||(lPhase!=='answered')||!myHand.length||lStealAvail;
   bs.textContent=lPhase==='steal'?'✕ CANCEL STEAL':'⚡ STEAL';
@@ -1084,9 +1095,14 @@ function getEligible(s){
 function nextQuestion(){
   if(!gameState||gameState.turn!==myRole)return;
   if(lPhase!=='idle'&&lPhase!=='question')return;
-  // If we need to pick a category first, open picker instead
-  if(gameState.needsCatPick===myRole && gameState.catQueue && gameState.catQueue.length){
+  // If a category pick is pending for ME, open picker instead of question
+  if(gameState.needsCatPick===myRole && (gameState.catQueue||[]).length){
     showCatPicker(gameState);return;
+  }
+  // Safety: if no categories are active yet, don't try to ask questions
+  if(!gameState.activeCats||gameState.activeCats.length===0){
+    document.getElementById('statusbar').textContent='Waiting for categories to be chosen...';
+    return;
   }
   const s=gameState;
   const pool=getEligible(s);
@@ -1625,10 +1641,10 @@ function lockSet(s,cells,player,cat){
   }
 
   if(s.scores[player]>=2){s.gameOver=true;return;}
-  // Next player to move gets to pick the next category (if one is available)
-  if(s.catQueue.length){
-    const nextPlayer=opp(player); // turn will switch to opp after this
-    s.needsCatPick=nextPlayer;
+  // Next player to move picks the next category (if queue isn't empty)
+  // Turn switches to opp after set — so opp is the one who picks
+  if((s.catQueue||[]).length){
+    s.needsCatPick=opp(player);
   }
   checkForced(s);
 }
