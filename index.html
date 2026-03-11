@@ -1169,29 +1169,50 @@ function renderControls(s,isMyTurn,myHand){
   bn.disabled=answered||(lPhase!=='idle'&&lPhase!=='question')||inTrapMode||noCats||needsPick;
   bsk.disabled=(lPhase!=='idle'&&lPhase!=='question')||inTrapMode||needsPick;
   const myFailField=myRole==='red'?'stealFailRed':'stealFailBlue';
-  const stealLimitReached=(s[myFailField]||0)>={STEAL_LIMIT};
-  bs.disabled=!lQ||(lPhase!=='answered')||stealLimitReached;
-  if(stealLimitReached&&lPhase!=='steal')bs.textContent='⛔ STEALS USED';
-  bp.disabled=!lQ||(lPhase!=='answered')||!myHand.length||lStealAvail;
-  const myFails=s[myRole==='red'?'stealFailRed':'stealFailBlue']||0;
+  const myFails=s[myFailField]||0;
+  const stealLimitReached=myFails>=3;
   const stealRemain=3-myFails;
-  if(lPhase==='steal')bs.textContent='✕ CANCEL STEAL';
-  else if(stealLimitReached)bs.textContent='⛔ STEALS USED';
-  else bs.textContent='⚡ STEAL ('+stealRemain+' left)';
-  bp.textContent=(lPhase==='place'||lPhase==='steal-place')?'✕ CANCEL':'📍 PLACE';
+
+  // STEAL button
+  if(lPhase==='steal'){
+    bs.disabled=false;
+    bs.textContent='✕ CANCEL STEAL';
+    bs.style.cssText='';
+  } else if(stealLimitReached){
+    bs.disabled=true;
+    bs.textContent='⛔ STEALS USED';
+    bs.style.cssText='';
+  } else if(lStealAvail&&lPhase==='answered'){
+    // Steal is available and glowing — must steal or it passes
+    bs.disabled=false;
+    bs.textContent='⚡ STEAL ('+stealRemain+' left)';
+    bs.style.background='linear-gradient(135deg,#ff8800,#ffcc00)';
+    bs.style.color='#111';
+    bs.style.boxShadow='0 0 18px rgba(255,204,0,0.7)';
+    bs.style.animation='steal-pulse 0.8s infinite alternate';
+  } else if(lPhase==='answered'&&lQ){
+    // Answered correctly, steal is optional (tile not on opp board)
+    bs.disabled=false;
+    bs.textContent='⚡ STEAL ('+stealRemain+' left)';
+    bs.style.cssText='';
+  } else {
+    bs.disabled=true;
+    bs.textContent='⚡ STEAL ('+stealRemain+' left)';
+    bs.style.cssText='';
+  }
+
+  // PLACE button
+  if(lPhase==='place'||lPhase==='steal-place'){
+    bp.disabled=false;
+    bp.textContent='✕ CANCEL';
+  } else {
+    bp.disabled=!lQ||(lPhase!=='answered')||!myHand.length||lStealAvail;
+    bp.textContent='📍 PLACE';
+  }
+
   // Trap-bar indicator
   const trapBarEl = document.getElementById('trap-bar');
   if(trapBarEl) trapBarEl.classList.toggle('show', inTrapMode);
-  if(lPhase==='steal'){bs.disabled=false;}
-  if(lPhase==='place'||lPhase==='steal-place'){bp.disabled=false;}
-  if(lStealAvail&&lPhase==='answered'){
-    bs.style.background='linear-gradient(135deg,#ff8800,#ffcc00)';
-    bs.style.color='#111';bs.style.boxShadow='0 0 18px rgba(255,204,0,0.7)';
-    bs.style.animation='steal-pulse 0.8s infinite alternate';
-    bs.disabled=false;
-  } else {
-    bs.style.cssText='';
-  }
 }
 
 // ============================================================
@@ -1795,7 +1816,10 @@ function lockSet(s,cells,player,cat){
   s.scores={...s.scores,[player]:(s.scores[player]||0)+1};
   s.money={...s.money,[player]:(s.money[player]||0)+500};
   s.grid=grid;
-  s.msg=cd.label+' SET COMPLETED! (+£500) '+(player==='red'?'P1':'P2')+' scores!';
+  // Reset steal fail counters for both players on every set win
+  s.stealFailRed=0;
+  s.stealFailBlue=0;
+  s.msg=cd.label+' SET COMPLETED! (+£500) '+(player==='red'?'P1':'P2')+' scores! Steal limits reset.';
 
   if(player===myRole){
     playSound('set');
