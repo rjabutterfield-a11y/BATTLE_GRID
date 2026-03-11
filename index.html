@@ -1168,6 +1168,13 @@ function renderControls(s,isMyTurn,myHand){
   const noCats = !gameState || !gameState.activeCats || gameState.activeCats.length===0;
   bn.disabled=answered||(lPhase!=='idle'&&lPhase!=='question')||inTrapMode||noCats||needsPick;
   bsk.disabled=(lPhase!=='idle'&&lPhase!=='question')||inTrapMode||needsPick;
+  // Reset skip button style (may have been highlighted by forced-pass detection)
+  if(bsk.textContent==='⛔ PASS TURN (no moves)' && !bsk.disabled){
+    // Keep it highlighted if we're in forced-pass
+  } else if(lPhase==='idle'){
+    bsk.textContent='SKIP';
+    bsk.style.cssText='';
+  }
   const myFailField=myRole==='red'?'stealFailRed':'stealFailBlue';
   const myFails=s[myFailField]||0;
   const stealLimitReached=myFails>=3;
@@ -1240,11 +1247,17 @@ function boardHasSpaceFor(s, tileId, role){
   return false;
 }
 
+function stealsExhausted(s, role){
+  const failField = role==='red'?'stealFailRed':'stealFailBlue';
+  return (s[failField]||0) >= 3;
+}
+
 function getEligibleFor(s, role){
   const myOnBoard = new Set(s.grid.filter(g=>g&&g.player===role&&!g.locked).map(g=>g.tileId));
   const oppOnBoard = new Set(s.grid.filter(g=>g&&g.player===opp(role)&&!g.locked).map(g=>g.tileId));
   const myHand    = new Set(role==='red'?s.handRed:s.handBlue);
   const hasEmpty  = s.grid.some(g=>!g);
+  const noSteals  = stealsExhausted(s, role);
 
   return QUESTIONS.map((q,i)=>({q,i})).filter(({q,i})=>{
     if(s.usedQ.includes(i))                    return false; // already asked
@@ -1256,14 +1269,19 @@ function getEligibleFor(s, role){
     if(myHand.has(t.id))                        return false; // already in my hand
     if(myOnBoard.has(t.id)&&!oppOnBoard.has(t.id)) return false; // already on board, can't steal back
 
+    const canSteal = oppOnBoard.has(t.id);
+
+    // If this player has no steals left, never offer them a steal-only question
+    if(noSteals && canSteal && myOnBoard.has(t.id)) return false;
+
     if(s.forced){
-      // Steal-mode only: question must enable a steal
-      return oppOnBoard.has(t.id);
+      // Steal-mode only: question must enable a steal (only possible if steals remain)
+      return canSteal && !noSteals;
     } else {
-      // Normal mode: question must enable EITHER placing a new tile OR stealing from opp
-      const canPlace  = !myOnBoard.has(t.id) && hasEmpty;
-      const canSteal  = oppOnBoard.has(t.id);
-      return canPlace || canSteal;
+      // Normal mode: question must enable placing OR stealing
+      const canPlace = !myOnBoard.has(t.id) && hasEmpty;
+      // If no steals left, only offer questions that can be placed
+      return noSteals ? canPlace : (canPlace || canSteal);
     }
   });
 }
@@ -1302,8 +1320,25 @@ function nextQuestion(){
       document.getElementById('answers').innerHTML='';
       renderGame();return;
     } else {
-      // In normal mode, try resetting lastStolen and retry once
-      // Retry without lastStolen/lastPlaced blocks
+      // Check if steals exhausted is the reason — if so, offer forced pass
+      if(stealsExhausted(s,myRole)){
+        // All remaining questions require a steal but this player has none left
+        // Show a clear PASS TURN prompt rather than freezing
+        lPhase='idle';lQ=null;lTile=null;lStealAvail=false;
+        document.getElementById('qtext').textContent=
+          '⛔ All available tiles are held by your opponent and you have no steals left. You must pass your turn.';
+        document.getElementById('answers').innerHTML='';
+        // Highlight the skip button to make the action obvious
+        const bsk=document.getElementById('btn-skip');
+        if(bsk){
+          bsk.textContent='⛔ PASS TURN (no moves)';
+          bsk.style.background='rgba(255,80,80,0.35)';
+          bsk.style.borderColor='rgba(255,100,100,0.9)';
+          bsk.disabled=false;
+        }
+        renderGame();return;
+      }
+      // In normal mode, try resetting lastStolen/lastPlaced blocks and retry once
       const sRetry={...s,lastStolen:null,lastPlaced:null};
       const retryPool=getEligibleFor(sRetry,myRole);
       if(!retryPool.length){endGame(s,'No more questions available!');saveState(s);return;}
