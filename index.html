@@ -328,13 +328,22 @@ const ALL_CATS = {
     tiles:[{id:'frm1',e:'🐷',l:'Pig'},{id:'frm2',e:'🐄',l:'Cow'},{id:'frm3',e:'🐑',l:'Sheep'},{id:'frm4',e:'🐓',l:'Chicken'}]},
   nursery:{label:'Nursery Rhymes',color:'rgba(130,80,255,0.3)',border:'#8250ff',
     tiles:[{id:'nur1',e:'🕸️',l:'Little Miss Muffet'},{id:'nur2',e:'🥚',l:'Humpty Dumpty'},{id:'nur3',e:'🌟',l:'Jack and Jill'},{id:'nur4',e:'🐑',l:'Little Bo Peep'}]},
+  weekend:{label:'Long Weekend',color:'rgba(255,200,0,0.3)',border:'#ffc800',
+    tiles:[{id:'wk1',e:'🎉',l:'Friday'},{id:'wk2',e:'☀️',l:'Saturday'},{id:'wk3',e:'😴',l:'Sunday'},{id:'wk4',e:'😩',l:'Monday'}]},
+  tens:{label:'Tens',color:'rgba(0,220,180,0.3)',border:'#00dcb4',
+    tiles:[{id:'ten1',e:'🔟',l:'10'},{id:'ten2',e:'2️⃣',l:'20'},{id:'ten3',e:'3️⃣',l:'30'},{id:'ten4',e:'4️⃣',l:'40'}]},
+  directions:{label:'Directions',color:'rgba(80,160,255,0.3)',border:'#50a0ff',
+    tiles:[{id:'dir1',e:'⬆️',l:'Up'},{id:'dir2',e:'⬇️',l:'Down'},{id:'dir3',e:'⬅️',l:'Left'},{id:'dir4',e:'➡️',l:'Right'}]},
 };
-const CAT_KEYS=['celebrities','biscuits','farmyard','nursery'];
+const CAT_KEYS=['celebrities','biscuits','farmyard','nursery','weekend','tens','directions'];
 const CAT_OPTS={
   celebrities:['Tom Hanks','Tom Cruise','Tom Hiddleston','Tom Hardy'],
   biscuits:['Digestive','Bourbon','Custard Cream','Jammy Dodger'],
   farmyard:['Pig','Cow','Sheep','Chicken'],
   nursery:['Little Miss Muffet','Humpty Dumpty','Jack and Jill','Little Bo Peep'],
+  weekend:['Friday','Saturday','Sunday','Monday'],
+  tens:['10','20','30','40'],
+  directions:['Up','Down','Left','Right'],
 };
 const QUESTIONS=[
   // ── FAMOUS TOMS ──
@@ -513,6 +522,64 @@ const QUESTIONS=[
   {q:"This character was cited in a landmark 1972 case on animal welfare law — a farmer argued that leaving livestock unattended was culturally normalised, citing the rhyme as evidence of historical practice. Which character?",cat:'nursery',a:'Little Bo Peep'},
   {q:"The arachnid in this character's rhyme has been identified by entomologists as almost certainly a daddy-long-legs rather than a spider — based on behavioural descriptions in pre-1800 variants of the text. Which character?",cat:'nursery',a:'Little Miss Muffet'},
   {q:"Composer Carl Orff set this rhyme to music in 1932 as part of his Schulwerk educational music series — a curriculum now used in over 40 countries to teach children rhythm and composition. Which rhyme?",cat:'nursery',a:'Jack and Jill'},
+
+  // ── LONG WEEKEND ──
+  {q:"The name of this day derives from the Old Norse 'Frjádagr', meaning the day of the goddess Frigg or Freya. Which long weekend day?",cat:'weekend',a:'Friday'},
+  {q:"This is the day of the week on which more takeaway food is ordered in the UK than any other, according to Just Eat delivery data. Which long weekend day?",cat:'weekend',a:'Friday'},
+  {q:"HMRC data shows this is the day on which the most self-assessment tax returns are submitted at the last minute — historically peaking at 11:59pm. Which long weekend day?",cat:'weekend',a:'Friday'},
+  {q:"The Sabbath in Judaism begins at sundown on this day and lasts until the following night. Which long weekend day does it begin on?",cat:'weekend',a:'Friday'},
+  {q:"In Islam, the Jumu'ah — the obligatory congregational prayer — is performed by Muslim men on this day at midday. Which long weekend day?",cat:'weekend',a:'Friday'},
+  {q:"This day takes its English name from 'Sæternesdæg' — the day of the Roman god Saturn — making it the only day of the week named after a Roman rather than a Norse deity. Which long weekend day?",cat:'weekend',a:'Saturday'},
+  {q:"Premier League football fixtures are most commonly scheduled on this afternoon at 3pm — a tradition dating back to the 1880s. Which long weekend day?",cat:'weekend',a:'Saturday'},
+  {q:"The Grand National at Aintree has been run on this day since 1947 — having originally taken place on a Friday. Which long weekend day?",cat:'weekend',a:'Saturday'},
+  {q:"The fewest babies are born on this day in England and Wales — because scheduled caesarean sections and induced labours are rarely carried out over the weekend. Which long weekend day sees the fewest births?",cat:'weekend',a:'Sunday'},
+  {q:"The Sunday Trading Act 1994 restricts large shops in England and Wales to trading for a maximum of six consecutive hours on this day. Which long weekend day?",cat:'weekend',a:'Sunday'},
+  {q:"In Christianity this day commemorates the resurrection and replaced Saturday as the primary day of worship in early Christian communities. Which long weekend day?",cat:'weekend',a:'Sunday'},
+  {q:"The Shipping Forecast's 0048 broadcast on this night is the longest and most detailed of the four daily readings — traditionally heard by sailors preparing for the working week ahead. Which long weekend day night?",cat:'weekend',a:'Sunday'},
+  {q:"NHS absence data consistently shows this is the most common day for people to call in sick to work — with absence rates roughly 35% higher than the weekly average. Which long weekend day?",cat:'weekend',a:'Monday'},
+  {q:"This day is named after the Moon — from the Old English 'Mōnandæg', itself a translation of the Latin 'dies Lunae'. Which long weekend day?",cat:'weekend',a:'Monday'},
+  {q:"LinkedIn data shows this is the day on which the most job applications are submitted in the UK, with a peak between 10am and noon. Which long weekend day?",cat:'weekend',a:'Monday'},
+  {q:"In many European countries this is called 'the second day' — it is the day after the traditional day of rest and the first day of the working week. Which long weekend day?",cat:'weekend',a:'Monday'},
+
+  // ── TENS ──
+  {q:"Number 10 Downing Street has been the official residence of the British Prime Minister since 1735. What is that house number as a multiple of ten?",cat:'tens',a:'10'},
+  {q:"This is the number of events in a decathlon — the athletics competition whose winner is often called the world's greatest all-round athlete. Which multiple of ten?",cat:'tens',a:'10'},
+  {q:"A standard game of ten-pin bowling consists of this many frames. Which multiple of ten?",cat:'tens',a:'10'},
+  {q:"The human body has this many fingers and thumbs in total — also the basis for our decimal number system. Which multiple of ten?",cat:'tens',a:'10'},
+  {q:"This is the number of amendments in the United States Bill of Rights — ratified in 1791 as the first additions to the Constitution. Which multiple of ten?",cat:'tens',a:'10'},
+  {q:"A score — as used in the phrase 'threescore years and ten', meaning seventy — equals this many. Which multiple of ten is one score?",cat:'tens',a:'20'},
+  {q:"This is the number of overs each team faces in a T20 cricket match — giving the format its name. Which multiple of ten?",cat:'tens',a:'20'},
+  {q:"The speed limit in miles per hour introduced on many UK residential streets since 2020, replacing the former 30mph limit. Which multiple of ten?",cat:'tens',a:'20'},
+  {q:"This is the minimum age to stand for election as a Member of Parliament in the United Kingdom. Which multiple of ten?",cat:'tens',a:'20'},
+  {q:"A standard dartboard has this many numbered segments arranged around its face — one for each number from 1 to this total. Which multiple of ten?",cat:'tens',a:'20'},
+  {q:"The standard speed limit in miles per hour in a built-up area in the UK — the limit most commonly enforced on residential and town-centre roads. Which multiple of ten?",cat:'tens',a:'30'},
+  {q:"A full adult set of human teeth numbers this many in total — including all four wisdom teeth. Which multiple of ten?",cat:'tens',a:'30'},
+  {q:"This is the number of days in the months of September, April, June and November — as the traditional mnemonic rhyme reminds us. Which multiple of ten?",cat:'tens',a:'30'},
+  {q:"A rugby union match has this many players on the pitch in total — fifteen from each side. Which multiple of ten?",cat:'tens',a:'30'},
+  {q:"This is the number of years that define a pearl wedding anniversary — the milestone between silver at 25 and ruby at 40. Which multiple of ten?",cat:'tens',a:'30'},
+  {q:"This is the number of thieves in the classic tale Ali Baba and the Forty Thieves. Which multiple of ten is in the title?",cat:'tens',a:'40'},
+  {q:"In tennis this is the score that follows 30 — the last point before winning the game, or deuce if the opponent also reaches it. Which multiple of ten?",cat:'tens',a:'40'},
+  {q:"The Bible records that Jesus spent this many days fasting in the wilderness — also the origin of the word quarantine, from Italian. Which multiple of ten?",cat:'tens',a:'40'},
+  {q:"A standard human pregnancy lasts this many weeks, as used by midwives when calculating due dates. Which multiple of ten?",cat:'tens',a:'40'},
+  {q:"This is the number of hours in a standard working week under the EU Working Time Directive, though UK workers could opt out of the cap. Which multiple of ten?",cat:'tens',a:'40'},
+
+  // ── DIRECTIONS ──
+  {q:"In political terminology, this direction describes progressive or socialist positions — derived from where those delegates sat in the French Revolutionary National Assembly. Which direction?",cat:'directions',a:'Left'},
+  {q:"Stage directions describe the part of the stage furthest from the audience as this direction — from the convention of raked Victorian stages where that end was physically higher. Which direction?",cat:'directions',a:'Up'},
+  {q:"In Western typography, text is aligned to this side of the page by default — the direction from which reading begins in languages using the Latin alphabet. Which direction?",cat:'directions',a:'Left'},
+  {q:"A river always flows in this direction relative to its source — from higher ground toward lower ground and eventually the sea. Which direction?",cat:'directions',a:'Down'},
+  {q:"In manga and traditional Japanese books, pages are read from this side of the page — the opposite convention to Western publications. Which direction?",cat:'directions',a:'Right'},
+  {q:"A chess pawn moves in this direction on every standard turn — it can never retreat, and captures diagonally forward. Which direction does it travel?",cat:'directions',a:'Up'},
+  {q:"In heraldry, 'sinister' refers to this side of a coat of arms from the viewer's perspective — the bearer's own right, but the viewer's opposite. Which direction from the viewer?",cat:'directions',a:'Left'},
+  {q:"The phrase 'things have gone south' — meaning something has failed or deteriorated — comes from the convention of placing inferior or unknown territories at this edge of old maps. Which direction?",cat:'directions',a:'Down'},
+  {q:"In boxing, a southpaw leads with their right hand — meaning their more powerful hand sits on this side of the body. Which direction?",cat:'directions',a:'Right'},
+  {q:"A barometer reading moving in this direction indicates rising atmospheric pressure — typically a sign that the weather is about to improve. Which direction?",cat:'directions',a:'Up'},
+  {q:"In snooker and pool, applying topspin by striking the cue ball above its centre causes it to keep rolling in this direction after contact. Which direction?",cat:'directions',a:'Up'},
+  {q:"The Home key on a standard keyboard moves the cursor to this end of the current line of text. Which direction?",cat:'directions',a:'Left'},
+  {q:"In Western musical notation, notes written higher on the stave represent higher pitches — so a rising melody line also moves in this direction on the page. Which direction?",cat:'directions',a:'Up'},
+  {q:"On a standard number line as taught in schools, positive numbers extend in this direction from zero. Which direction?",cat:'directions',a:'Right'},
+  {q:"The idiomatic phrase describing a political moderate says they are neither extreme: neither far this direction, nor far right. Which direction completes the phrase?",cat:'directions',a:'Left'},
+  {q:"In ten-pin bowling, a ball that curves toward the pins from this side of the lane — for a right-handed bowler — is called a hook. Which direction does it curve toward?",cat:'directions',a:'Right'},
 ];
 
 // ============================================================
@@ -643,6 +710,8 @@ function makeState(code){
     needsCatPick:'red',
     forced:false,
     lastStolen:null,
+    stealFailRed:0,
+    stealFailBlue:0,
     lastPlaced:null,
     trapRed:null,
     trapBlue:null,
@@ -678,6 +747,8 @@ function fixState(s){
   s.redJoined=!!s.redJoined; s.blueJoined=!!s.blueJoined; s.started=!!s.started;
   s.forced=!!s.forced; s.gameOver=!!s.gameOver;
   if(!s.lastPlaced)s.lastPlaced=null;
+  if(s.stealFailRed===undefined)s.stealFailRed=0;
+  if(s.stealFailBlue===undefined)s.stealFailBlue=0;
   if(s.trapRed===undefined)s.trapRed=null;
   if(s.trapBlue===undefined)s.trapBlue=null;
   if(s.trapRed2===undefined)s.trapRed2=null;
@@ -1097,9 +1168,16 @@ function renderControls(s,isMyTurn,myHand){
   const noCats = !gameState || !gameState.activeCats || gameState.activeCats.length===0;
   bn.disabled=answered||(lPhase!=='idle'&&lPhase!=='question')||inTrapMode||noCats||needsPick;
   bsk.disabled=(lPhase!=='idle'&&lPhase!=='question')||inTrapMode||needsPick;
-  bs.disabled=!lQ||(lPhase!=='answered');
+  const myFailField=myRole==='red'?'stealFailRed':'stealFailBlue';
+  const stealLimitReached=(s[myFailField]||0)>={STEAL_LIMIT};
+  bs.disabled=!lQ||(lPhase!=='answered')||stealLimitReached;
+  if(stealLimitReached&&lPhase!=='steal')bs.textContent='⛔ STEALS USED';
   bp.disabled=!lQ||(lPhase!=='answered')||!myHand.length||lStealAvail;
-  bs.textContent=lPhase==='steal'?'✕ CANCEL STEAL':'⚡ STEAL';
+  const myFails=s[myRole==='red'?'stealFailRed':'stealFailBlue']||0;
+  const stealRemain=3-myFails;
+  if(lPhase==='steal')bs.textContent='✕ CANCEL STEAL';
+  else if(stealLimitReached)bs.textContent='⛔ STEALS USED';
+  else bs.textContent='⚡ STEAL ('+stealRemain+' left)';
   bp.textContent=(lPhase==='place'||lPhase==='steal-place')?'✕ CANCEL':'📍 PLACE';
   // Trap-bar indicator
   const trapBarEl = document.getElementById('trap-bar');
@@ -1223,7 +1301,9 @@ function nextQuestion(){
   lStealAvail=false;
   // Store question text+choices in Firebase so opponent can see it (no answerIdx = no cheating)
   const sharedQ={q:pick.q.q,choices};
-  const updated={...s,usedQ:[...s.usedQ,pick.i],lastStolen:null,msg:'Question '+(s.usedQ.length+1),currentQ:sharedQ};
+  // Store pick.i locally so we can add to usedQ only on correct answer
+  lQ.questionIdx=pick.i;
+  const updated={...s,lastStolen:null,msg:'Question '+(s.usedQ.length+1),currentQ:sharedQ};
   gameState=updated;
   saveState(updated);
   showQuestion();
@@ -1384,10 +1464,13 @@ function selectAnswer(idx){
     } else {
       updated.msg='✅ CORRECT! '+tile.l+' earned (+£100)';
     }
+    // Only mark question as used when answered CORRECTLY — wrong answers return to pool
+    if(lQ.questionIdx!==undefined) updated.usedQ=[...s.usedQ,lQ.questionIdx];
     gameState=updated;
     saveState(updated);
   } else {
     // Wrong answer — clear local state immediately, switch turn, show answer for 2s
+    // Question is NOT added to usedQ — it returns to the pool for later
     const wrongAnswer=lQ.choices[lQ.answerIdx];
     const wrongMsg='❌ '+myRole.toUpperCase()+' got it wrong! Answer: '+wrongAnswer+" — "+opp(myRole).toUpperCase()+"'s turn!";
     // Reset local phase BEFORE saving so onStateUpdate sees clean state
@@ -1599,6 +1682,12 @@ function activateTrap(){
 
 function activateSteal(){
   if(!gameState||gameState.turn!==myRole)return;
+  const myFailField=myRole==='red'?'stealFailRed':'stealFailBlue';
+  if((gameState[myFailField]||0)>=3){
+    document.getElementById('statusbar').textContent='⛔ You have used all 3 steal attempts this game!';
+    return;
+  }
+  if(!gameState||gameState.turn!==myRole)return;
   if(lPhase==='steal'){
     lPhase='answered';lStealTile=null;
     document.getElementById('steal-bar').classList.remove('show');
@@ -1646,7 +1735,15 @@ function attemptSteal(idx){
 function failSteal(){
   lPhase='idle';lStealTile=null;lQ=null;lStealAvail=false;
   document.getElementById('steal-bar').classList.remove('show');
-  const updated={...gameState,turn:opp(myRole),msg:'Steal failed — '+opp(myRole).toUpperCase()+"'s turn!",currentQ:null,lastPlaced:null};
+  const failField=myRole==='red'?'stealFailRed':'stealFailBlue';
+  const newFails=(gameState[failField]||0)+1;
+  const atLimit=newFails>=3;
+  const limitMsg=atLimit?' ⛔ '+myRole.toUpperCase()+' has used all 3 steal attempts!':'';
+  const updated={...gameState,
+    [failField]:newFails,
+    turn:opp(myRole),
+    msg:'Steal failed'+limitMsg+' — '+opp(myRole).toUpperCase()+"'s turn!",
+    currentQ:null,lastPlaced:null};
   checkForced(updated);gameState=updated;saveState(updated);
   document.getElementById('qtext').textContent='Press NEXT Q when ready!';
   document.getElementById('answers').innerHTML='';
