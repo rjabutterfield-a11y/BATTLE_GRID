@@ -40,6 +40,11 @@ input.code-input:focus{border-color:rgba(0,180,255,0.8);}
 header{text-align:center;padding:6px 0 2px;}
 header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spacing:0.1em;background:linear-gradient(180deg,#fff 0%,#88ccff 50%,#0088ff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;}
 #role-badge{text-align:center;font-family:'Bebas Neue';font-size:1rem;letter-spacing:0.15em;margin-bottom:4px;}
+#observer-banner{display:none;background:rgba(0,80,40,0.35);border:1px solid #00cc77;border-radius:8px;padding:8px 16px;margin:4px 8px;font-family:'Share Tech Mono';font-size:0.78rem;color:#00ff99;text-align:center;letter-spacing:0.1em;}
+#observer-banner.show{display:block;}
+#observer-qbox{display:none;background:rgba(0,40,80,0.5);border:1px solid rgba(100,180,255,0.4);border-radius:8px;padding:10px 14px;margin:6px 8px;font-family:'Share Tech Mono';font-size:0.8rem;color:rgba(200,230,255,0.9);}
+#observer-qbox.show{display:block;}
+#observer-qbox .obs-answer{color:#00ff99;font-weight:bold;margin-top:6px;}
 #scorebar{display:flex;align-items:center;gap:10px;padding:4px 0;}
 .player-panel{flex:1;background:rgba(255,255,255,0.03);border:1px solid;border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px;transition:box-shadow 0.3s;}
 .player-panel.red{border-color:rgba(255,34,68,0.4);}
@@ -179,6 +184,7 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
   <div class="btn-row">
     <button class="action-btn" onclick="goCreate()">➕ Create Game</button>
     <button class="action-btn" style="background:linear-gradient(135deg,#220033,#660099);" onclick="goJoin()">🔑 Join Game</button>
+    <button class="action-btn" style="background:linear-gradient(135deg,#003322,#006644);margin-top:6px;" onclick="goObserve()">👁 Watch Game</button>
   </div>
 </div>
 
@@ -207,6 +213,18 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
   <button class="plain-btn" onclick="goHome()">← Back</button>
 </div>
 
+<!-- SCREEN 3b: OBSERVE (enter code to watch) -->
+<div id="s-observe" class="screen">
+  <div class="bg-title">BATTLE GRID</div>
+  <div class="status-line">Enter the 4-digit room code to watch</div>
+  <input id="observe-input" class="code-input" type="text" maxlength="4" placeholder="0000"
+    oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)"
+    onkeydown="if(event.key==='Enter')doObserve()">
+  <div id="observe-error" class="error-line"></div>
+  <button class="action-btn" style="background:linear-gradient(135deg,#003322,#006644);" onclick="doObserve()">👁 Watch Room</button>
+  <button class="plain-btn" onclick="goHome()">← Back</button>
+</div>
+
 <!-- SCREEN 4: PICK ROLE (after joining) -->
 <div id="s-role" class="screen">
   <div class="bg-title">BATTLE GRID</div>
@@ -223,6 +241,12 @@ header h1{font-family:'Bebas Neue';font-size:clamp(1.8rem,4vw,3rem);letter-spaci
 <div id="game-screen">
   <header><h1>BATTLE GRID</h1></header>
   <div id="role-badge"></div>
+  <div id="observer-banner">👁 OBSERVER MODE — You can see everything. No controls active.</div>
+  <div id="observer-qbox">
+    <div id="observer-qtitle" style="opacity:0.5;font-size:0.7rem;margin-bottom:4px;">CURRENT QUESTION</div>
+    <div id="observer-qtext"></div>
+    <div class="obs-answer" id="observer-answer"></div>
+  </div>
   <div id="scorebar">
     <div class="player-panel red" id="panel-red">
       <div><div class="pname">🔴 P1</div><div class="ptiles" id="red-tiles">0 tiles</div></div>
@@ -724,7 +748,7 @@ function stopListening(){
 // NAVIGATION
 // ============================================================
 function showScreen(id){
-  ['s-home','s-create','s-join','s-role','game-screen'].forEach(s=>{
+  ['s-home','s-create','s-join','s-observe','s-role','game-screen'].forEach(s=>{
     const el=document.getElementById(s);
     if(s==='game-screen'){el.style.display=(s===id)?'flex':'none';}
     else{el.classList.toggle('active',s===id);}
@@ -733,11 +757,39 @@ function showScreen(id){
   document.getElementById('end').classList.remove('show');
 }
 
+function goObserve(){
+  if(!db){showHomeError('Firebase not connected');return;}
+  showScreen('s-observe');
+}
+
+async function doObserve(){
+  const code=document.getElementById('observe-input').value.trim();
+  const errEl=document.getElementById('observe-error');
+  errEl.style.display='none';
+  if(!/^\d{4}$/.test(code)){errEl.textContent='Enter a 4-digit number';errEl.style.display='block';return;}
+  let snap;
+  try{snap=await rref(code).get();}catch(e){errEl.textContent='Error: '+e.message;errEl.style.display='block';return;}
+  if(!snap.val()){errEl.textContent='Room '+code+' not found';errEl.style.display='block';return;}
+  roomCode=code;
+  myRole='observer';
+  gameState=fixState(snap.val());
+  // Start listening but never write
+  startListening();
+  stopLobbyMusic();
+  showScreen('game-screen');
+  document.getElementById('observer-banner').classList.add('show');
+  document.getElementById('waiting').classList.remove('show');
+  document.getElementById('game-screen').style.display='flex';
+  renderGame();
+}
+
 function goHome(){
   stopListening();
   stopLobbyMusic();
   myRole=null; roomCode=null; gameState=null;
   lPhase='idle'; lQ=null; lTile=null; lStealTile=null; lStealAvail=false;
+  const ob=document.getElementById('observer-banner');if(ob)ob.classList.remove('show');
+  const oq=document.getElementById('observer-qbox');if(oq)oq.classList.remove('show');
   showScreen('s-home');
 }
 
@@ -846,6 +898,13 @@ function onStateUpdate(s){
   document.getElementById('game-screen').style.display='flex';
   stopLobbyMusic();
 
+  // Observer: just render everything and show the question box, no other logic
+  if(myRole==='observer'){
+    updateObserverQBox(s);
+    renderGame();
+    return;
+  }
+
   // ── CATEGORY PICKER ──
   // Show picker overlay whenever this player needs to pick, regardless of whose turn it is
   if(s.needsCatPick===myRole && (s.catQueue||[]).length){
@@ -931,6 +990,23 @@ function pickCategory(catKey){
 // ============================================================
 // RENDER
 // ============================================================
+function updateObserverQBox(s){
+  const box=document.getElementById('observer-qbox');
+  const qtitle=document.getElementById('observer-qtitle');
+  const qtext=document.getElementById('observer-qtext');
+  const qanswer=document.getElementById('observer-answer');
+  if(!s.currentQ||!s.currentQ.q){
+    box.classList.remove('show');
+    return;
+  }
+  box.classList.add('show');
+  qtitle.textContent=(s.turn==='red'?'🔴 P1':'🔵 P2')+' IS ANSWERING';
+  qtext.textContent=s.currentQ.q;
+  // Find the answer from the question pool
+  const matchQ=QUESTIONS.find(q=>q.q===s.currentQ.q);
+  qanswer.textContent=matchQ?'✅ ANSWER: '+matchQ.a:'';
+}
+
 function renderGame(){
   if(!gameState||!myRole)return;
   const s=gameState;
@@ -939,8 +1015,14 @@ function renderGame(){
   const isMyTurn=s.turn===myRole;
 
   // Badge
-  document.getElementById('role-badge').textContent=myRole==='red'?'🔴 YOU ARE PLAYER 1':'🔵 YOU ARE PLAYER 2';
-  document.getElementById('role-badge').style.color=myRole==='red'?'var(--red)':'var(--blue)';
+  if(myRole==='observer'){
+    document.getElementById('role-badge').textContent='';
+    document.getElementById('observer-banner').classList.add('show');
+  } else {
+    document.getElementById('role-badge').textContent=myRole==='red'?'🔴 YOU ARE PLAYER 1':'🔵 YOU ARE PLAYER 2';
+    document.getElementById('role-badge').style.color=myRole==='red'?'var(--red)':'var(--blue)';
+    document.getElementById('observer-banner').classList.remove('show');
+  }
 
   // Scores
   document.getElementById('red-score').innerHTML=s.scores.red+' <span style="font-size:0.5rem;opacity:0.5">SETS</span>';
@@ -993,7 +1075,7 @@ function renderGrid(s,isMyTurn){
         const t=getTile(g.tileId);
         cell.classList.add(g.player,'locked');
         cell.innerHTML=`<span class="temoji">${t.e}</span><span class="tlabel">${t.l}</span><span class="licon">🔒</span>`;
-      } else if(g.player===myRole){
+      } else if(g.player===myRole || myRole==='observer'){
         const t=getTile(g.tileId);
         cell.classList.add(g.player);
         cell.innerHTML=`<span class="temoji">${t.e}</span><span class="tlabel">${t.l}</span>`;
@@ -1017,7 +1099,7 @@ function renderGrid(s,isMyTurn){
 
 function renderHand(player,hand,s){
   const el=document.getElementById(player+'-hand');el.innerHTML='';
-  if(player!==myRole){
+  if(player!==myRole && myRole!=='observer'){
     el.innerHTML=`<span style="color:rgba(200,220,255,0.25);font-size:0.72rem">${hand.length} tile${hand.length!==1?'s':''} (hidden)</span>`;
     return;
   }
@@ -1036,7 +1118,7 @@ function renderHand(player,hand,s){
 
 function renderCatProg(player,s){
   const el=document.getElementById(player+'-cats');el.innerHTML='';
-  if(player!==myRole){el.innerHTML='<span style="color:rgba(200,220,255,0.25);font-size:0.68rem">Hidden</span>';return;}
+  if(player!==myRole && myRole!=='observer'){el.innerHTML='<span style="color:rgba(200,220,255,0.25);font-size:0.68rem">Hidden</span>';return;}
   const hand=player==='red'?s.handRed:s.handBlue;
   const counts={};
   for(const g of s.grid)if(g&&g.player===player&&!g.locked){const c=getTileCat(g.tileId);counts[c]=(counts[c]||0)+1;}
@@ -1061,6 +1143,12 @@ function renderControls(s,isMyTurn,myHand){
   const bp=document.getElementById('btn-place');
   const bsk=document.getElementById('btn-skip');
   const btr=document.getElementById('btn-trap');
+  if(myRole==='observer'){
+    bn.disabled=bs.disabled=bp.disabled=bsk.disabled=btr.disabled=true;
+    bs.style.cssText='';bs.textContent='⚡ STEAL';bp.textContent='📍 PLACE';
+    btr.textContent='💣 TRAP';btr.style.cssText='';bsk.textContent='SKIP';bsk.style.cssText='';
+    return;
+  }
   if(!isMyTurn){
     bn.disabled=bs.disabled=bp.disabled=bsk.disabled=btr.disabled=true;
     bs.style.cssText=''; bs.textContent='⚡ STEAL';
@@ -1889,6 +1977,8 @@ async function chooseRole(role){
 // ============================================================
 window.goHome=goHome;
 window.goJoin=goJoin;
+window.goObserve=goObserve;
+window.doObserve=doObserve;
 window.doJoin=doJoin;
 window.nextQuestion=nextQuestion;
 window.activateSteal=activateSteal;
